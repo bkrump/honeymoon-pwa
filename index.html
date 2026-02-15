@@ -43,9 +43,10 @@
       </section>
 
       <section class="tab-panel" id="itinerary-panel">
-        <section class="content-card" id="itinerary">
+        <section class="content-card itinerary-shell" id="itinerary">
           <h2>Itinerary</h2>
-          <div id="itinerary-list"></div>
+          <div id="itinerary-jump" class="itinerary-jump"></div>
+          <div id="itinerary-list" class="itinerary-days"></div>
         </section>
       </section>
 
@@ -55,14 +56,6 @@
         <button class="tab-button" data-tab="itinerary" aria-selected="false">Itinerary</button>
       </nav>
     </main>
-
-    <template id="itinerary-day-template">
-      <article class="day-card">
-        <h3></h3>
-        <p class="location"></p>
-        <ul class="timeline"></ul>
-      </article>
-    </template>
 
     <script src="./app.js" defer></script>
   </body>

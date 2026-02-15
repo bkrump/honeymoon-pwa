@@ -203,51 +203,310 @@ function setHomeMessage(referenceDate = new Date()) {
   setBackgroundTheme(state.stage);
 }
 
-function renderItinerary(data) {
-  const wrapper = document.querySelector("#itinerary-list");
-  wrapper.innerHTML = "";
+function createLocalDateFromISO(isoDate) {
+  if (!isoDate || typeof isoDate !== "string") return null;
+  const [y, m, d] = isoDate.split("-").map(Number);
+  if (!y || !m || !d) return null;
+  return createLocalDate(y, m - 1, d);
+}
 
-  const dayTemplate = document.querySelector("#itinerary-day-template");
-  let mykonosOffset = 0;
-  let marrakechOffset = 0;
+function toISODate(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
 
-  const dateFormatter = new Intl.DateTimeFormat(undefined, {
+function formatLongDate(date) {
+  return new Intl.DateTimeFormat(undefined, {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric"
+  }).format(date);
+}
+
+function formatShortDate(date) {
+  return new Intl.DateTimeFormat(undefined, {
     weekday: "short",
     month: "short",
     day: "numeric"
-  });
+  }).format(date);
+}
 
-  data.itinerary.forEach((day) => {
-    const clone = dayTemplate.content.cloneNode(true);
+function buildLegacyItineraryDays(data) {
+  if (!Array.isArray(data.itinerary)) return [];
+
+  let mykonosOffset = 1;
+  let marrakechOffset = 0;
+
+  return data.itinerary.map((day) => {
     const location = day.location || "Trip";
     const locationLower = location.toLowerCase();
+    let dateObj = new Date(MYKONOS_START);
 
-    let displayDate;
     if (locationLower.includes("mykonos")) {
-      displayDate = new Date(MYKONOS_START);
-      displayDate.setDate(MYKONOS_START.getDate() + mykonosOffset);
+      dateObj.setDate(MYKONOS_START.getDate() + mykonosOffset);
       mykonosOffset += 1;
     } else if (locationLower.includes("marrakech")) {
-      displayDate = new Date(MARRAKECH_START);
-      displayDate.setDate(MARRAKECH_START.getDate() + marrakechOffset);
+      dateObj = new Date(MARRAKECH_START);
+      dateObj.setDate(MARRAKECH_START.getDate() + marrakechOffset);
       marrakechOffset += 1;
-    } else {
-      displayDate = new Date(MYKONOS_START);
-      displayDate.setDate(MYKONOS_START.getDate() + mykonosOffset + marrakechOffset);
     }
 
-    clone.querySelector("h3").textContent = location;
-    clone.querySelector(".location").textContent = dateFormatter.format(displayDate);
-
-    const timeline = clone.querySelector(".timeline");
-    day.items.forEach((item) => {
-      const li = document.createElement("li");
-      li.innerHTML = `<strong>${item.time} - ${item.title}</strong><br><span>${item.detail}</span>`;
-      timeline.appendChild(li);
-    });
-
-    wrapper.appendChild(clone);
+    return {
+      date: toISODate(dateObj),
+      title: location,
+      entries: (day.items || []).map((item) => ({
+        type: "plan",
+        title: item.title,
+        time: item.time,
+        details: [item.detail]
+      }))
+    };
   });
+}
+
+function getItineraryDays(data) {
+  const days = Array.isArray(data.itineraryDays) && data.itineraryDays.length
+    ? data.itineraryDays
+    : buildLegacyItineraryDays(data);
+
+  return days
+    .slice()
+    .sort((a, b) => {
+      const ad = createLocalDateFromISO(a.date);
+      const bd = createLocalDateFromISO(b.date);
+      if (!ad || !bd) return 0;
+      return ad - bd;
+    });
+}
+
+function appendMetaRow(container, label, value) {
+  if (!value) return;
+  const row = document.createElement("div");
+  row.className = "entry-meta-row";
+
+  const key = document.createElement("span");
+  key.className = "entry-meta-key";
+  key.textContent = label;
+
+  const val = document.createElement("span");
+  val.className = "entry-meta-value";
+  val.textContent = value;
+
+  row.append(key, val);
+  container.appendChild(row);
+}
+
+function renderEntry(entry) {
+  const card = document.createElement("article");
+  card.className = `entry-card entry-${entry.type || "plan"}`;
+
+  const top = document.createElement("div");
+  top.className = "entry-top";
+
+  const pill = document.createElement("span");
+  pill.className = "entry-pill";
+  pill.textContent = entry.typeLabel || (entry.type ? entry.type.toUpperCase() : "PLAN");
+
+  const time = document.createElement("span");
+  time.className = "entry-time";
+  time.textContent = entry.time || "Time TBD";
+  top.append(pill, time);
+
+  const title = document.createElement("h4");
+  title.className = "entry-title";
+  title.textContent = entry.title || "Reservation";
+
+  card.append(top, title);
+
+  if (entry.confirmationCode) {
+    const code = document.createElement("p");
+    code.className = "entry-code";
+    code.textContent = `Code ${entry.confirmationCode}`;
+    card.appendChild(code);
+  }
+
+  const meta = document.createElement("div");
+  meta.className = "entry-meta";
+  appendMetaRow(meta, "Provider", entry.provider);
+  appendMetaRow(meta, "Location", entry.location);
+  appendMetaRow(meta, "Address", entry.address);
+  appendMetaRow(meta, "Pickup", entry.pickup);
+  appendMetaRow(meta, "Drop-off", entry.dropoff);
+  appendMetaRow(meta, "Driver", entry.driver);
+  appendMetaRow(meta, "Car", entry.carType);
+  appendMetaRow(meta, "Duration", entry.duration);
+  appendMetaRow(meta, "Cabin", entry.cabin);
+  if (meta.children.length) card.appendChild(meta);
+
+  if (Array.isArray(entry.segments) && entry.segments.length) {
+    const block = document.createElement("div");
+    block.className = "entry-list-block";
+    const heading = document.createElement("p");
+    heading.className = "entry-list-title";
+    heading.textContent = "Segments";
+    const list = document.createElement("ul");
+    list.className = "entry-list";
+    entry.segments.forEach((item) => {
+      const li = document.createElement("li");
+      li.textContent = item;
+      list.appendChild(li);
+    });
+    block.append(heading, list);
+    card.appendChild(block);
+  }
+
+  if (Array.isArray(entry.layovers) && entry.layovers.length) {
+    const block = document.createElement("div");
+    block.className = "entry-list-block";
+    const heading = document.createElement("p");
+    heading.className = "entry-list-title";
+    heading.textContent = "Layovers";
+    const list = document.createElement("ul");
+    list.className = "entry-list";
+    entry.layovers.forEach((item) => {
+      const li = document.createElement("li");
+      li.textContent = item;
+      list.appendChild(li);
+    });
+    block.append(heading, list);
+    card.appendChild(block);
+  }
+
+  if (Array.isArray(entry.details) && entry.details.length) {
+    const block = document.createElement("div");
+    block.className = "entry-list-block";
+    const heading = document.createElement("p");
+    heading.className = "entry-list-title";
+    heading.textContent = "Details";
+    const list = document.createElement("ul");
+    list.className = "entry-list";
+    entry.details.forEach((item) => {
+      const li = document.createElement("li");
+      li.textContent = item;
+      list.appendChild(li);
+    });
+    block.append(heading, list);
+    card.appendChild(block);
+  }
+
+  return card;
+}
+
+let itineraryJumpObserver = null;
+
+function setActiveJumpChip(targets, activeChip) {
+  targets.forEach(({ chip }) => {
+    chip.classList.toggle("active", chip === activeChip);
+  });
+}
+
+function setupItineraryJumpObserver(targets) {
+  if (itineraryJumpObserver) {
+    itineraryJumpObserver.disconnect();
+    itineraryJumpObserver = null;
+  }
+  if (!targets.length) return;
+
+  setActiveJumpChip(targets, targets[0].chip);
+  if (!("IntersectionObserver" in window)) return;
+
+  const chipBySectionId = new Map(targets.map(({ section, chip }) => [section.id, chip]));
+  itineraryJumpObserver = new IntersectionObserver(
+    (entries) => {
+      const visible = entries
+        .filter((entry) => entry.isIntersecting)
+        .sort((a, b) => Math.abs(a.boundingClientRect.top) - Math.abs(b.boundingClientRect.top));
+
+      if (!visible.length) return;
+      const chip = chipBySectionId.get(visible[0].target.id);
+      if (chip) setActiveJumpChip(targets, chip);
+    },
+    {
+      root: null,
+      rootMargin: "-20% 0px -66% 0px",
+      threshold: [0.05, 0.2, 0.5]
+    }
+  );
+
+  targets.forEach(({ section }) => itineraryJumpObserver.observe(section));
+}
+
+function renderItinerary(data) {
+  const wrapper = document.querySelector("#itinerary-list");
+  const jump = document.querySelector("#itinerary-jump");
+  if (!wrapper) return;
+  wrapper.innerHTML = "";
+  if (jump) jump.innerHTML = "";
+
+  const days = getItineraryDays(data);
+  if (!days.length) {
+    const empty = document.createElement("article");
+    empty.className = "entry-card entry-empty";
+    empty.textContent = "No itinerary details available yet.";
+    wrapper.appendChild(empty);
+    return;
+  }
+
+  const jumpTargets = [];
+
+  days.forEach((day, index) => {
+    const dateObj = createLocalDateFromISO(day.date) || new Date();
+    const section = document.createElement("section");
+    section.className = "day-section";
+    section.id = `it-day-${day.date || index}`;
+
+    const header = document.createElement("div");
+    header.className = "day-header";
+
+    const title = document.createElement("h3");
+    title.textContent = day.title || day.location || "Day Plan";
+
+    const dateText = document.createElement("p");
+    dateText.className = "day-date";
+    dateText.textContent = formatLongDate(dateObj);
+
+    header.append(title, dateText);
+    if (day.subtitle) {
+      const subtitle = document.createElement("p");
+      subtitle.className = "day-subtitle";
+      subtitle.textContent = day.subtitle;
+      header.appendChild(subtitle);
+    }
+
+    const entriesWrap = document.createElement("div");
+    entriesWrap.className = "day-entries";
+
+    const entries = Array.isArray(day.entries) ? day.entries : [];
+    if (!entries.length) {
+      const empty = document.createElement("article");
+      empty.className = "entry-card entry-empty";
+      empty.textContent = "No reservations for this day yet.";
+      entriesWrap.appendChild(empty);
+    } else {
+      entries.forEach((entry) => entriesWrap.appendChild(renderEntry(entry)));
+    }
+
+    section.append(header, entriesWrap);
+    wrapper.appendChild(section);
+
+    if (jump) {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "jump-chip";
+      chip.textContent = formatShortDate(dateObj);
+      chip.addEventListener("click", () => {
+        section.scrollIntoView({ behavior: "smooth", block: "start" });
+        setActiveJumpChip(jumpTargets, chip);
+      });
+      jump.appendChild(chip);
+      jumpTargets.push({ section, chip });
+    }
+  });
+
+  setupItineraryJumpObserver(jumpTargets);
 }
 
 function renderTripData(data) {
@@ -327,7 +586,11 @@ async function bootstrap() {
   registerServiceWorker();
 
   const cached = getCachedTripData() || FALLBACK_DATA;
-  if (hasValidRememberedSession() && cached?.itinerary?.length) {
+  const hasCachedDays = Boolean(
+    (Array.isArray(cached?.itineraryDays) && cached.itineraryDays.length) ||
+    (Array.isArray(cached?.itinerary) && cached.itinerary.length)
+  );
+  if (hasValidRememberedSession() && hasCachedDays) {
     onUnlock(cached);
     return;
   }
