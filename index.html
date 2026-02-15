@@ -15,38 +15,35 @@
 
     <link rel="stylesheet" href="./styles.css" />
   </head>
-  <body>
+  <body class="app-locked">
     <div class="bg-glow bg-glow-one"></div>
     <div class="bg-glow bg-glow-two"></div>
 
-    <main class="app-shell">
-      <header class="hero-card">
-        <div class="hero-text">
-          <p class="eyebrow">Offline + Ready</p>
-          <h1>Honeymoon</h1>
-          <p id="trip-title" class="trip-title"></p>
-          <p id="trip-dates" class="trip-dates"></p>
-        </div>
-        <img src="./assets/images/mykonos-sunset.svg" alt="Mykonos-inspired illustration" class="hero-image" />
-      </header>
+    <section id="auth-gate" class="auth-gate">
+      <form id="auth-form" class="auth-card">
+        <h2>Private Trip Vault</h2>
+        <p id="auth-status">Enter passphrase to unlock your honeymoon details.</p>
+        <label for="auth-passphrase">Passphrase</label>
+        <input id="auth-passphrase" type="password" autocomplete="current-password" required />
+        <label class="remember-row">
+          <input id="auth-remember" type="checkbox" checked />
+          Remember this device for 30 days
+        </label>
+        <button id="auth-submit" type="submit">Unlock</button>
+      </form>
+    </section>
 
+    <main class="app-shell">
       <nav class="tab-bar" aria-label="Main tabs">
         <button class="tab-button active" data-tab="home" aria-selected="true">Home</button>
         <button class="tab-button" data-tab="itinery" aria-selected="false">Itinery</button>
       </nav>
 
       <section class="tab-panel active" id="home-panel">
-        <div class="preview-controls">
-          <label for="preview-date">Preview date</label>
-          <div class="preview-controls-row">
-            <input type="date" id="preview-date" />
-            <button type="button" id="preview-reset">Today</button>
-          </div>
-          <p id="preview-mode-label" class="preview-mode-label">Using today</p>
-        </div>
-        <article class="home-message-card">
-          <h2 id="home-message-title">Welcome</h2>
-          <p id="home-message-subtitle"></p>
+        <article class="countdown-shell">
+          <p id="countdown-kicker" class="countdown-kicker">Countdown</p>
+          <h1 id="countdown-number" class="countdown-number">0</h1>
+          <p id="countdown-label" class="countdown-label">days</p>
         </article>
       </section>
 

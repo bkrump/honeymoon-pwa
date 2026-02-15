@@ -1,58 +1,126 @@
 const FALLBACK_DATA = {
-  tripTitle: "Mykonos + Marrakech Honeymoon",
-  tripDateRange: "June 10 - June 21, 2026",
-  itinerary: [
-    {
-      title: "Day 1",
-      location: "Mykonos",
-      items: [
-        { time: "15:10", title: "Land in Mykonos", detail: "Taxi pickup from airport to hotel." },
-        { time: "18:30", title: "Sunset walk", detail: "Little Venice and windmills." }
-      ]
-    },
-    {
-      title: "Day 7",
-      location: "Marrakech",
-      items: [
-        { time: "11:20", title: "Arrive in Marrakech", detail: "Driver arranged to riad." },
-        { time: "20:30", title: "Jemaa el-Fnaa stroll", detail: "Street food and market walk." }
-      ]
-    }
-  ],
-  reservations: [],
-  essentials: []
+  tripTitle: "Honeymoon",
+  tripDateRange: "",
+  itinerary: []
 };
 
-const OFFLINE_STORAGE_KEY = "honeymoon_offline_data_v1";
+const OFFLINE_STORAGE_KEY = "honeymoon_trip_cache_v2";
+const AUTH_EXPIRY_KEY = "honeymoon_auth_expiry_v1";
+const AUTH_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+const ENCRYPTED_DATA_PATH = "./data/trip.enc.json";
 const TRIP_YEAR = 2026;
+const encoder = new TextEncoder();
+const decoder = new TextDecoder();
 
-async function loadTripData() {
+function b64ToBytes(b64) {
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
+}
+
+async function deriveAesKey(passphrase, salt, iterations) {
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(passphrase),
+    { name: "PBKDF2" },
+    false,
+    ["deriveKey"]
+  );
+  return crypto.subtle.deriveKey(
+    {
+      name: "PBKDF2",
+      salt,
+      iterations,
+      hash: "SHA-256"
+    },
+    keyMaterial,
+    {
+      name: "AES-GCM",
+      length: 256
+    },
+    false,
+    ["decrypt"]
+  );
+}
+
+async function decryptTripData(passphrase) {
+  const response = await fetch(ENCRYPTED_DATA_PATH, { cache: "no-cache" });
+  if (!response.ok) throw new Error("Could not load encrypted trip data.");
+  const payload = await response.json();
+  const iterations = Number(payload.iterations);
+
+  if (!payload?.salt || !payload?.iv || !payload?.ciphertext || !Number.isFinite(iterations)) {
+    throw new Error("Encrypted payload is invalid.");
+  }
+
   try {
-    const response = await fetch("./data/trip.json", { cache: "no-cache" });
-    if (!response.ok) throw new Error("Could not fetch trip data");
-    const json = await response.json();
-    localStorage.setItem(OFFLINE_STORAGE_KEY, JSON.stringify(json));
-    return json;
+    const salt = b64ToBytes(payload.salt);
+    const iv = b64ToBytes(payload.iv);
+    const ciphertext = b64ToBytes(payload.ciphertext);
+    const key = await deriveAesKey(passphrase, salt, iterations);
+    const plaintext = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ciphertext);
+    return JSON.parse(decoder.decode(plaintext));
   } catch {
-    const local = localStorage.getItem(OFFLINE_STORAGE_KEY);
-    if (local) return JSON.parse(local);
-    return FALLBACK_DATA;
+    throw new Error("Incorrect passphrase.");
   }
 }
 
-function setSummary(data) {
-  document.querySelector("#trip-title").textContent = data.tripTitle;
-  document.querySelector("#trip-dates").textContent = data.tripDateRange;
+function getCachedTripData() {
+  const raw = localStorage.getItem(OFFLINE_STORAGE_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function cacheTripData(data) {
+  localStorage.setItem(OFFLINE_STORAGE_KEY, JSON.stringify(data));
+}
+
+function hasValidRememberedSession() {
+  const expiresAt = Number(localStorage.getItem(AUTH_EXPIRY_KEY) || 0);
+  return Number.isFinite(expiresAt) && expiresAt > Date.now();
+}
+
+function setRememberedSession(enabled) {
+  if (!enabled) {
+    localStorage.removeItem(AUTH_EXPIRY_KEY);
+    return;
+  }
+  localStorage.setItem(AUTH_EXPIRY_KEY, String(Date.now() + AUTH_TTL_MS));
+}
+
+function setAuthStatus(message) {
+  const status = document.querySelector("#auth-status");
+  if (status) status.textContent = message;
+}
+
+function lockApp(message = "Enter passphrase to unlock your honeymoon details.") {
+  document.body.classList.add("app-locked");
+  setAuthStatus(message);
+}
+
+function unlockApp() {
+  document.body.classList.remove("app-locked");
 }
 
 function setBackgroundTheme(stage) {
-  document.body.classList.remove("theme-pretrip", "theme-mykonos", "theme-marrakech");
+  document.body.classList.remove("theme-pretrip", "theme-mykonos", "theme-marrakech", "theme-posttrip");
   if (stage === "pretrip") {
     document.body.classList.add("theme-pretrip");
     return;
   }
   if (stage === "marrakech") {
     document.body.classList.add("theme-marrakech");
+    return;
+  }
+  if (stage === "posttrip") {
+    document.body.classList.add("theme-posttrip");
     return;
   }
   document.body.classList.add("theme-mykonos");
@@ -72,112 +140,65 @@ function getHomeState(localToday) {
   const mykonosEnd = createLocalDate(TRIP_YEAR, 5, 20);
   const marrakechStart = createLocalDate(TRIP_YEAR, 5, 21);
   const marrakechEnd = createLocalDate(TRIP_YEAR, 5, 27);
+  const homeDate = createLocalDate(TRIP_YEAR, 5, 28);
 
   if (localToday < mykonosStart) {
     const days = daysUntil(mykonosStart, localToday);
     return {
-      title: `${days} day${days === 1 ? "" : "s"} until Mykonos`,
-      subtitle: "Countdown to June 14.",
+      kicker: "Countdown to Mykonos",
+      number: String(days),
+      label: "days",
       stage: "pretrip"
     };
   }
 
   if (localToday >= mykonosStart && localToday <= mykonosEnd) {
+    const days = daysUntil(marrakechStart, localToday);
     return {
-      title: "Welcome to Mykonos",
-      subtitle: "Enjoy the sea, sunsets, and whitewashed streets.",
+      kicker: "Countdown to Marrakech",
+      number: String(days),
+      label: "days",
       stage: "mykonos"
     };
   }
 
   if (localToday >= marrakechStart && localToday <= marrakechEnd) {
+    const days = daysUntil(homeDate, localToday);
     return {
-      title: "Welcome to Marrakech",
-      subtitle: "Enjoy the lantern glow, markets, and rooftops.",
+      kicker: "Countdown to Home",
+      number: String(days),
+      label: "days",
       stage: "marrakech"
     };
   }
 
   if (localToday > marrakechEnd) {
     return {
-      title: "Welcome home",
-      subtitle: "Hope you had an incredible honeymoon.",
-      stage: "mykonos"
+      kicker: "Welcome Home",
+      number: "0",
+      label: "days",
+      stage: "posttrip"
     };
   }
 
-  return { title: "Welcome", subtitle: "", stage: "mykonos" };
+  return { kicker: "Countdown", number: "0", label: "days", stage: "mykonos" };
 }
 
-function setHomeMessage(referenceDate = new Date(), isPreview = false) {
+function setHomeMessage(referenceDate = new Date()) {
   const localToday = createLocalDate(
     referenceDate.getFullYear(),
     referenceDate.getMonth(),
     referenceDate.getDate()
   );
   const state = getHomeState(localToday);
-  const titleEl = document.querySelector("#home-message-title");
-  const subtitleEl = document.querySelector("#home-message-subtitle");
+  const kickerEl = document.querySelector("#countdown-kicker");
+  const numberEl = document.querySelector("#countdown-number");
+  const labelEl = document.querySelector("#countdown-label");
 
-  titleEl.textContent = state.title;
-  subtitleEl.textContent = state.subtitle;
+  if (kickerEl) kickerEl.textContent = state.kicker;
+  if (numberEl) numberEl.textContent = state.number;
+  if (labelEl) labelEl.textContent = state.label;
   setBackgroundTheme(state.stage);
-
-  if (isPreview) {
-    const formatted = localToday.toLocaleDateString(undefined, {
-      year: "numeric",
-      month: "short",
-      day: "numeric"
-    });
-    subtitleEl.textContent = state.subtitle
-      ? `${state.subtitle} Preview: ${formatted}.`
-      : `Preview: ${formatted}.`;
-  }
-}
-
-function formatDateInput(date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
-
-function parseDateInput(value) {
-  const [year, month, day] = value.split("-").map((v) => Number(v));
-  if (!year || !month || !day) return null;
-  return createLocalDate(year, month - 1, day);
-}
-
-function setupDatePreview() {
-  const input = document.querySelector("#preview-date");
-  const resetButton = document.querySelector("#preview-reset");
-  const status = document.querySelector("#preview-mode-label");
-  if (!input || !resetButton || !status) return false;
-
-  const now = new Date();
-  const todayString = formatDateInput(now);
-  input.value = todayString;
-
-  const apply = () => {
-    const pickedDate = parseDateInput(input.value) || now;
-    const isPreview = input.value !== todayString;
-    setHomeMessage(pickedDate, isPreview);
-
-    if (isPreview) {
-      status.textContent = `Previewing ${pickedDate.toLocaleDateString()}`;
-    } else {
-      status.textContent = "Using today";
-    }
-  };
-
-  input.addEventListener("input", apply);
-  resetButton.addEventListener("click", () => {
-    input.value = todayString;
-    apply();
-  });
-
-  apply();
-  return true;
 }
 
 function renderItinerary(data) {
@@ -199,6 +220,10 @@ function renderItinerary(data) {
 
     wrapper.appendChild(clone);
   });
+}
+
+function renderTripData(data) {
+  renderItinerary(data);
 }
 
 function setupTabs() {
@@ -224,6 +249,35 @@ function setupTabs() {
   });
 }
 
+function setupAuthHandlers(onUnlock) {
+  const form = document.querySelector("#auth-form");
+  const passphraseInput = document.querySelector("#auth-passphrase");
+  const rememberInput = document.querySelector("#auth-remember");
+  const submitButton = document.querySelector("#auth-submit");
+  if (!form || !passphraseInput || !rememberInput || !submitButton) return;
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const passphrase = passphraseInput.value;
+    if (!passphrase) return;
+
+    submitButton.disabled = true;
+    setAuthStatus("Unlocking...");
+
+    try {
+      const data = await decryptTripData(passphrase);
+      cacheTripData(data);
+      setRememberedSession(Boolean(rememberInput.checked));
+      passphraseInput.value = "";
+      onUnlock(data);
+    } catch (error) {
+      setAuthStatus(error?.message || "Unlock failed.");
+    } finally {
+      submitButton.disabled = false;
+    }
+  });
+}
+
 async function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
   try {
@@ -234,14 +288,23 @@ async function registerServiceWorker() {
 }
 
 async function bootstrap() {
-  const data = await loadTripData();
-  setSummary(data);
-  if (!setupDatePreview()) {
+  const onUnlock = (data) => {
+    renderTripData(data);
     setHomeMessage();
-  }
-  renderItinerary(data);
+    unlockApp();
+  };
+
+  setupAuthHandlers(onUnlock);
   setupTabs();
   registerServiceWorker();
+
+  const cached = getCachedTripData() || FALLBACK_DATA;
+  if (hasValidRememberedSession() && cached?.itinerary?.length) {
+    onUnlock(cached);
+    return;
+  }
+
+  lockApp();
 }
 
 bootstrap();

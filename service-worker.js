@@ -1,5 +1,5 @@
-const CACHE_NAME = "honeymoon-static-v6";
-const RUNTIME_CACHE = "honeymoon-runtime-v6";
+const CACHE_NAME = "honeymoon-static-v9";
+const RUNTIME_CACHE = "honeymoon-runtime-v9";
 
 const CORE_ASSETS = [
   "./",
@@ -8,13 +8,14 @@ const CORE_ASSETS = [
   "./app.js",
   "./manifest.webmanifest",
   "./offline.html",
-  "./data/trip.json",
+  "./data/trip.enc.json",
   "./assets/icons/icon-192.png",
   "./assets/icons/icon-512.png",
   "./assets/icons/apple-touch-icon.png",
   "./assets/images/mykonos-bg.jpg",
   "./assets/images/pretrip-bg.jpg",
   "./assets/images/marrakech-bg.jpg",
+  "./assets/images/posttrip-bg.jpg",
   "./assets/images/mykonos-sunset.svg",
   "./assets/images/marrakech-night.svg"
 ];
