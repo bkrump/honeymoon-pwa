@@ -1,5 +1,5 @@
-const CACHE_NAME = "honeymoon-static-v15";
-const RUNTIME_CACHE = "honeymoon-runtime-v15";
+const CACHE_NAME = "honeymoon-static-v16";
+const RUNTIME_CACHE = "honeymoon-runtime-v16";
 
 const CORE_ASSETS = [
   "./",
