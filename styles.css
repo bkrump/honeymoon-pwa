@@ -1,4 +1,5 @@
 :root {
+  --tabbar-height: 70px;
   --blue-900: #0f4f7d;
   --blue-700: #1f89c7;
   --blue-500: #42aee6;
@@ -184,7 +185,7 @@ body.app-locked .auth-gate {
   z-index: 1;
   max-width: 780px;
   margin: 0 auto;
-  padding: calc(env(safe-area-inset-top) + 1rem) 1rem calc(env(safe-area-inset-bottom) + 7rem);
+  padding: calc(env(safe-area-inset-top) + 1rem) 1rem 1rem;
 }
 
 .tab-bar {
@@ -197,12 +198,17 @@ body.app-locked .auth-gate {
   grid-template-columns: 1fr 1fr;
   gap: 0.45rem;
   padding: 0.45rem;
+  min-height: var(--tabbar-height);
   border-radius: 1rem;
   background: rgba(7, 16, 30, 0.72);
   border: 1px solid rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(8px);
   box-shadow: 0 0.8rem 1.8rem rgba(3, 12, 24, 0.45);
   z-index: 20;
+}
+
+.tab-bar-spacer {
+  height: calc(var(--tabbar-height) + env(safe-area-inset-bottom) + 1.6rem);
 }
 
 .tab-button {
@@ -326,6 +332,10 @@ body.theme-posttrip .countdown-kicker {
   padding: 1rem;
   background: rgba(255, 255, 255, 0.88);
   box-shadow: 0 0.9rem 1.4rem rgba(20, 58, 86, 0.16);
+}
+
+#itinerary-panel .content-card {
+  margin-bottom: 0.2rem;
 }
 
 .content-card h2 {

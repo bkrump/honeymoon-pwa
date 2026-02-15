@@ -9,6 +9,8 @@ const AUTH_EXPIRY_KEY = "honeymoon_auth_expiry_v1";
 const AUTH_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const ENCRYPTED_DATA_PATH = "./data/trip.enc.json";
 const TRIP_YEAR = 2026;
+const MYKONOS_START = createLocalDate(TRIP_YEAR, 5, 14);
+const MARRAKECH_START = createLocalDate(TRIP_YEAR, 5, 21);
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
@@ -206,10 +208,36 @@ function renderItinerary(data) {
   wrapper.innerHTML = "";
 
   const dayTemplate = document.querySelector("#itinerary-day-template");
+  let mykonosOffset = 0;
+  let marrakechOffset = 0;
+
+  const dateFormatter = new Intl.DateTimeFormat(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric"
+  });
+
   data.itinerary.forEach((day) => {
     const clone = dayTemplate.content.cloneNode(true);
-    clone.querySelector("h3").textContent = day.title;
-    clone.querySelector(".location").textContent = day.location;
+    const location = day.location || "Trip";
+    const locationLower = location.toLowerCase();
+
+    let displayDate;
+    if (locationLower.includes("mykonos")) {
+      displayDate = new Date(MYKONOS_START);
+      displayDate.setDate(MYKONOS_START.getDate() + mykonosOffset);
+      mykonosOffset += 1;
+    } else if (locationLower.includes("marrakech")) {
+      displayDate = new Date(MARRAKECH_START);
+      displayDate.setDate(MARRAKECH_START.getDate() + marrakechOffset);
+      marrakechOffset += 1;
+    } else {
+      displayDate = new Date(MYKONOS_START);
+      displayDate.setDate(MYKONOS_START.getDate() + mykonosOffset + marrakechOffset);
+    }
+
+    clone.querySelector("h3").textContent = location;
+    clone.querySelector(".location").textContent = dateFormatter.format(displayDate);
 
     const timeline = clone.querySelector(".timeline");
     day.items.forEach((item) => {
