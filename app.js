@@ -414,7 +414,6 @@ function setupItineraryJumpObserver(targets) {
   if (!("IntersectionObserver" in window)) return;
 
   const chipBySectionId = new Map(targets.map(({ section, chip }) => [section.id, chip]));
-  const scrollRoot = document.querySelector(".app-shell");
   itineraryJumpObserver = new IntersectionObserver(
     (entries) => {
       const visible = entries
@@ -426,7 +425,7 @@ function setupItineraryJumpObserver(targets) {
       if (chip) setActiveJumpChip(targets, chip);
     },
     {
-      root: scrollRoot || null,
+      root: null,
       rootMargin: "-16% 0px -68% 0px",
       threshold: [0.05, 0.2, 0.5]
     }
