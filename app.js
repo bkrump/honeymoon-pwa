@@ -112,20 +112,28 @@ function unlockApp() {
 }
 
 function setBackgroundTheme(stage) {
-  document.body.classList.remove("theme-pretrip", "theme-mykonos", "theme-marrakech", "theme-posttrip");
+  const themes = ["theme-pretrip", "theme-mykonos", "theme-marrakech", "theme-posttrip"];
+  document.body.classList.remove(...themes);
+  document.documentElement.classList.remove(...themes);
+
+  const setTheme = (className) => {
+    document.body.classList.add(className);
+    document.documentElement.classList.add(className);
+  };
+
   if (stage === "pretrip") {
-    document.body.classList.add("theme-pretrip");
+    setTheme("theme-pretrip");
     return;
   }
   if (stage === "marrakech") {
-    document.body.classList.add("theme-marrakech");
+    setTheme("theme-marrakech");
     return;
   }
   if (stage === "posttrip") {
-    document.body.classList.add("theme-posttrip");
+    setTheme("theme-posttrip");
     return;
   }
-  document.body.classList.add("theme-mykonos");
+  setTheme("theme-mykonos");
 }
 
 function createLocalDate(year, monthIndex, day) {
