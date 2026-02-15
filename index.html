@@ -34,11 +34,6 @@
     </section>
 
     <main class="app-shell">
-      <nav class="tab-bar" aria-label="Main tabs">
-        <button class="tab-button active" data-tab="home" aria-selected="true">Home</button>
-        <button class="tab-button" data-tab="itinery" aria-selected="false">Itinery</button>
-      </nav>
-
       <section class="tab-panel active" id="home-panel">
         <article class="countdown-shell">
           <p id="countdown-kicker" class="countdown-kicker">Countdown</p>
@@ -47,12 +42,17 @@
         </article>
       </section>
 
-      <section class="tab-panel" id="itinery-panel">
-        <section class="content-card" id="itinery">
-          <h2>Itinery</h2>
+      <section class="tab-panel" id="itinerary-panel">
+        <section class="content-card" id="itinerary">
+          <h2>Itinerary</h2>
           <div id="itinerary-list"></div>
         </section>
       </section>
+
+      <nav class="tab-bar" aria-label="Main tabs">
+        <button class="tab-button active" data-tab="home" aria-selected="true">Home</button>
+        <button class="tab-button" data-tab="itinerary" aria-selected="false">Itinerary</button>
+      </nav>
     </main>
 
     <template id="itinerary-day-template">

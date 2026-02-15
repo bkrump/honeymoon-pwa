@@ -230,7 +230,7 @@ function setupTabs() {
   const buttons = document.querySelectorAll(".tab-button");
   const panels = {
     home: document.querySelector("#home-panel"),
-    itinery: document.querySelector("#itinery-panel")
+    itinerary: document.querySelector("#itinerary-panel")
   };
 
   buttons.forEach((button) => {
