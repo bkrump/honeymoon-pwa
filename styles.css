@@ -1,0 +1,447 @@
+:root {
+  --blue-900: #0f4f7d;
+  --blue-700: #1f89c7;
+  --blue-500: #42aee6;
+  --blue-300: #9bd8f5;
+  --sand-100: #fff7e9;
+  --sand-200: #f8ead3;
+  --terracotta-500: #c85d39;
+  --ink-900: #1f2a37;
+  --white: #ffffff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  font-family: "Avenir Next", "Trebuchet MS", sans-serif;
+  color: var(--ink-900);
+  background: #0f4f7d;
+}
+
+body {
+  position: relative;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-image: linear-gradient(
+      160deg,
+      rgba(11, 47, 73, 0.62),
+      rgba(20, 91, 132, 0.45) 45%,
+      rgba(19, 64, 95, 0.56)
+    ),
+    url("./assets/images/mykonos-bg.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+body.theme-marrakech::before {
+  background-image: linear-gradient(
+      160deg,
+      rgba(52, 24, 10, 0.6),
+      rgba(118, 58, 20, 0.44) 46%,
+      rgba(56, 22, 9, 0.58)
+    ),
+    url("./assets/images/marrakech-bg.jpg");
+}
+
+body.theme-pretrip::before {
+  background-image: linear-gradient(
+      160deg,
+      rgba(25, 45, 24, 0.48),
+      rgba(96, 118, 66, 0.34) 46%,
+      rgba(28, 37, 19, 0.5)
+    ),
+    url("./assets/images/pretrip-bg.jpg");
+}
+
+.bg-glow {
+  position: fixed;
+  z-index: 0;
+  border-radius: 999px;
+  filter: blur(4px);
+  opacity: 0.2;
+  pointer-events: none;
+}
+
+.bg-glow-one {
+  width: 16rem;
+  height: 16rem;
+  background: var(--terracotta-500);
+  top: -4rem;
+  right: -4rem;
+  animation: float-one 9s ease-in-out infinite alternate;
+}
+
+.bg-glow-two {
+  width: 20rem;
+  height: 20rem;
+  background: var(--white);
+  bottom: -8rem;
+  left: -6rem;
+  animation: float-two 10s ease-in-out infinite alternate;
+}
+
+.app-shell {
+  position: relative;
+  z-index: 1;
+  max-width: 780px;
+  margin: 0 auto;
+  padding: calc(env(safe-area-inset-top) + 1rem) 1rem calc(env(safe-area-inset-bottom) + 3rem);
+}
+
+.hero-card {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 1rem;
+  align-items: center;
+  background: linear-gradient(145deg, rgba(21, 114, 173, 0.82), rgba(92, 190, 233, 0.78));
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 1.5rem;
+  color: var(--white);
+  padding: 1.15rem;
+  box-shadow: 0 1.1rem 2rem rgba(14, 57, 89, 0.28);
+}
+
+.hero-text h1 {
+  margin: 0 0 0.4rem;
+  font-size: clamp(1.6rem, 5vw, 2.2rem);
+  line-height: 1.03;
+}
+
+.eyebrow {
+  display: inline-block;
+  margin: 0 0 0.65rem;
+  font-weight: 700;
+  font-size: 0.82rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(255, 247, 233, 0.93);
+  color: var(--blue-900);
+}
+
+.trip-title {
+  margin: 0 0 0.25rem;
+  font-size: 0.95rem;
+  font-weight: 650;
+}
+
+.trip-dates {
+  margin: 0;
+  opacity: 0.95;
+  font-weight: 520;
+}
+
+.hero-image {
+  width: 100%;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.tab-bar {
+  margin-top: 0.9rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+
+.tab-button {
+  border: 0;
+  border-radius: 999px;
+  padding: 0.7rem 0.9rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  background: rgba(255, 255, 255, 0.75);
+  color: var(--blue-900);
+}
+
+.tab-button.active {
+  background: rgba(15, 79, 125, 0.9);
+  color: var(--white);
+}
+
+.tab-panel {
+  display: none;
+}
+
+.tab-panel.active {
+  display: block;
+}
+
+.preview-controls {
+  margin-top: 1rem;
+  border-radius: 1rem;
+  padding: 0.85rem;
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 0.7rem 1.2rem rgba(20, 58, 86, 0.16);
+}
+
+.preview-controls label {
+  display: block;
+  font-weight: 650;
+  margin-bottom: 0.45rem;
+  color: var(--blue-900);
+}
+
+.preview-controls-row {
+  display: flex;
+  gap: 0.55rem;
+}
+
+.preview-controls-row input[type="date"] {
+  flex: 1;
+  border: 1px solid rgba(15, 79, 125, 0.3);
+  border-radius: 0.55rem;
+  padding: 0.48rem 0.55rem;
+  font: inherit;
+  color: var(--ink-900);
+  background: #fff;
+}
+
+.preview-controls-row button {
+  border: 0;
+  border-radius: 0.55rem;
+  padding: 0.48rem 0.72rem;
+  font-weight: 700;
+  background: rgba(15, 79, 125, 0.9);
+  color: var(--white);
+}
+
+.preview-mode-label {
+  margin: 0.5rem 0 0;
+  font-size: 0.8rem;
+  color: rgba(31, 42, 55, 0.75);
+}
+
+.home-message-card {
+  margin-top: 1rem;
+  border-radius: 1.2rem;
+  padding: 1.2rem;
+  background: linear-gradient(140deg, rgba(255, 255, 255, 0.9), rgba(247, 242, 223, 0.9));
+  box-shadow: 0 1rem 1.8rem rgba(20, 58, 86, 0.18);
+}
+
+.home-message-card h2 {
+  margin: 0;
+  font-size: clamp(1.4rem, 5vw, 2rem);
+  color: var(--blue-900);
+}
+
+.home-message-card p {
+  margin: 0.4rem 0 0;
+  color: rgba(31, 42, 55, 0.88);
+}
+
+.quick-actions {
+  margin-top: 0.95rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.action-card {
+  border: 0;
+  border-radius: 1rem;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--ink-900);
+  padding: 0.72rem;
+  box-shadow: 0 0.65rem 1.2rem rgba(26, 65, 94, 0.16);
+}
+
+.action-card:active {
+  transform: scale(0.99);
+}
+
+.action-icon {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--terracotta-500);
+}
+
+.action-card strong {
+  display: block;
+  margin-top: 0.25rem;
+}
+
+.action-card span:last-child {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: 0.8rem;
+  opacity: 0.74;
+}
+
+.vibe-section {
+  margin-top: 1.3rem;
+}
+
+.vibe-section h2 {
+  margin: 0 0 0.6rem;
+  color: var(--sand-100);
+  text-shadow: 0 0.2rem 0.9rem rgba(0, 0, 0, 0.2);
+}
+
+.vibe-scroll {
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  padding-bottom: 0.3rem;
+  scroll-snap-type: x mandatory;
+}
+
+.vibe-card {
+  min-width: min(78vw, 300px);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 0.9rem 1.4rem rgba(20, 58, 86, 0.22);
+  scroll-snap-align: start;
+}
+
+.vibe-card img {
+  width: 100%;
+  display: block;
+}
+
+.vibe-card-text {
+  padding: 0.7rem 0.8rem 0.9rem;
+  color: var(--white);
+}
+
+.vibe-card-text h3 {
+  margin: 0 0 0.3rem;
+}
+
+.vibe-card-text p {
+  margin: 0;
+  opacity: 0.92;
+  font-size: 0.9rem;
+}
+
+.vibe-blue .vibe-card-text {
+  background: linear-gradient(130deg, rgba(23, 113, 171, 0.88), rgba(67, 165, 214, 0.87));
+}
+
+.vibe-amber .vibe-card-text {
+  background: linear-gradient(130deg, rgba(141, 66, 35, 0.93), rgba(207, 120, 74, 0.88));
+}
+
+.content-card {
+  margin-top: 1rem;
+  border-radius: 1.1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 0.9rem 1.4rem rgba(20, 58, 86, 0.16);
+}
+
+.content-card h2 {
+  margin-top: 0;
+  margin-bottom: 0.7rem;
+}
+
+.day-card {
+  border-left: 4px solid var(--blue-700);
+  background: var(--sand-100);
+  border-radius: 0.7rem;
+  padding: 0.8rem;
+  margin-bottom: 0.65rem;
+}
+
+.day-card h3,
+.reservation-row h3 {
+  margin: 0;
+}
+
+.day-card .location {
+  margin: 0.2rem 0 0.5rem;
+  opacity: 0.74;
+}
+
+.timeline {
+  margin: 0;
+  padding-left: 1rem;
+}
+
+.timeline li {
+  margin-bottom: 0.4rem;
+}
+
+.reservation-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+  background: var(--sand-100);
+  border-radius: 0.7rem;
+  padding: 0.75rem;
+  margin-bottom: 0.55rem;
+}
+
+.reservation-meta {
+  margin: 0.25rem 0 0;
+  opacity: 0.75;
+  font-size: 0.9rem;
+}
+
+.confirmation-code {
+  border-radius: 0.6rem;
+  background: rgba(31, 137, 199, 0.12);
+  color: var(--blue-900);
+  border: 1px solid rgba(31, 137, 199, 0.3);
+  padding: 0.35rem 0.5rem;
+  font-size: 0.8rem;
+}
+
+#essentials-list {
+  margin: 0;
+  padding-left: 1rem;
+}
+
+#essentials-list li {
+  margin-bottom: 0.4rem;
+}
+
+@media (max-width: 700px) {
+  .hero-card {
+    grid-template-columns: 1fr;
+  }
+
+  .quick-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+@keyframes float-one {
+  from {
+    transform: translate(0, 0);
+  }
+
+  to {
+    transform: translate(-28px, 20px);
+  }
+}
+
+@keyframes float-two {
+  from {
+    transform: translate(0, 0);
+  }
+
+  to {
+    transform: translate(32px, -30px);
+  }
+}

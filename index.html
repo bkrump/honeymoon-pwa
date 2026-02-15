@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Honeymoon</title>
+    <meta name="theme-color" content="#1f89c7" />
+    <meta name="description" content="Offline honeymoon guide for Mykonos and Marrakech." />
+
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./assets/icons/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Honeymoon" />
+
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="bg-glow bg-glow-one"></div>
+    <div class="bg-glow bg-glow-two"></div>
+
+    <main class="app-shell">
+      <header class="hero-card">
+        <div class="hero-text">
+          <p class="eyebrow">Offline + Ready</p>
+          <h1>Honeymoon</h1>
+          <p id="trip-title" class="trip-title"></p>
+          <p id="trip-dates" class="trip-dates"></p>
+        </div>
+        <img src="./assets/images/mykonos-sunset.svg" alt="Mykonos-inspired illustration" class="hero-image" />
+      </header>
+
+      <nav class="tab-bar" aria-label="Main tabs">
+        <button class="tab-button active" data-tab="home" aria-selected="true">Home</button>
+        <button class="tab-button" data-tab="itinery" aria-selected="false">Itinery</button>
+      </nav>
+
+      <section class="tab-panel active" id="home-panel">
+        <div class="preview-controls">
+          <label for="preview-date">Preview date</label>
+          <div class="preview-controls-row">
+            <input type="date" id="preview-date" />
+            <button type="button" id="preview-reset">Today</button>
+          </div>
+          <p id="preview-mode-label" class="preview-mode-label">Using today</p>
+        </div>
+        <article class="home-message-card">
+          <h2 id="home-message-title">Welcome</h2>
+          <p id="home-message-subtitle"></p>
+        </article>
+      </section>
+
+      <section class="tab-panel" id="itinery-panel">
+        <section class="content-card" id="itinery">
+          <h2>Itinery</h2>
+          <div id="itinerary-list"></div>
+        </section>
+      </section>
+    </main>
+
+    <template id="itinerary-day-template">
+      <article class="day-card">
+        <h3></h3>
+        <p class="location"></p>
+        <ul class="timeline"></ul>
+      </article>
+    </template>
+
+    <script src="./app.js" defer></script>
+  </body>
+</html>
