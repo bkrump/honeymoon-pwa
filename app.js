@@ -234,12 +234,16 @@ function formatLongDate(date) {
   }).format(date);
 }
 
-function formatShortDate(date) {
-  return new Intl.DateTimeFormat(undefined, {
-    weekday: "short",
+function getJumpChipParts(date) {
+  const weekday = new Intl.DateTimeFormat(undefined, {
+    weekday: "short"
+  }).format(date);
+  const dayMonth = new Intl.DateTimeFormat(undefined, {
     month: "short",
     day: "numeric"
   }).format(date);
+
+  return { weekday, dayMonth };
 }
 
 function buildLegacyItineraryDays(data) {
@@ -504,7 +508,18 @@ function renderItinerary(data) {
       const chip = document.createElement("button");
       chip.type = "button";
       chip.className = "jump-chip";
-      chip.textContent = formatShortDate(dateObj);
+      chip.setAttribute("aria-label", formatLongDate(dateObj));
+
+      const { weekday, dayMonth } = getJumpChipParts(dateObj);
+      const weekdayEl = document.createElement("span");
+      weekdayEl.className = "jump-chip-weekday";
+      weekdayEl.textContent = weekday;
+
+      const dateEl = document.createElement("span");
+      dateEl.className = "jump-chip-date";
+      dateEl.textContent = dayMonth;
+
+      chip.append(weekdayEl, dateEl);
       chip.addEventListener("click", () => {
         section.scrollIntoView({ behavior: "smooth", block: "start" });
         setActiveJumpChip(jumpTargets, chip);
