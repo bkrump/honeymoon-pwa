@@ -102,7 +102,7 @@ function setAuthStatus(message) {
   if (status) status.textContent = message;
 }
 
-function lockApp(message = "Enter passphrase to unlock your honeymoon details.") {
+function lockApp(message = "Enter our secret phrase to unlock the details.") {
   document.body.classList.add("app-locked");
   setAuthStatus(message);
 }
@@ -157,36 +157,53 @@ function getHomeState(localToday) {
     return {
       kicker: "Countdown to Mykonos",
       number: String(days),
-      label: "days",
+      label: days === 1 ? "day" : "days",
       stage: "pretrip"
     };
   }
 
   if (localToday >= mykonosStart && localToday <= mykonosEnd) {
     const days = daysUntil(marrakechStart, localToday);
+    if (days <= 1) {
+      return {
+        kicker: "Next Stop",
+        number: "Marrakech",
+        label: "tomorrow",
+        stage: "mykonos"
+      };
+    }
     return {
       kicker: "Countdown to Marrakech",
       number: String(days),
-      label: "days",
+      label: days === 1 ? "day" : "days",
       stage: "mykonos"
     };
   }
 
   if (localToday >= marrakechStart && localToday <= marrakechEnd) {
     const days = daysUntil(homeDate, localToday);
+    if (days <= 1) {
+      return {
+        kicker: "Heading Home",
+        number: "Tomorrow",
+        label: "safe travels",
+        stage: "marrakech"
+      };
+    }
     return {
       kicker: "Countdown to Home",
       number: String(days),
-      label: "days",
+      label: days === 1 ? "day" : "days",
       stage: "marrakech"
     };
   }
 
   if (localToday > marrakechEnd) {
+    const daysSince = daysUntil(localToday, homeDate);
     return {
       kicker: "Welcome Home",
-      number: "0",
-      label: "days",
+      number: daysSince <= 7 ? "What a trip!" : String(daysSince),
+      label: daysSince <= 7 ? "memories made" : "days of memories",
       stage: "posttrip"
     };
   }
@@ -206,9 +223,44 @@ function setHomeMessage(referenceDate = new Date()) {
   const labelEl = document.querySelector("#countdown-label");
 
   if (kickerEl) kickerEl.textContent = state.kicker;
-  if (numberEl) numberEl.textContent = state.number;
+  if (numberEl) {
+    numberEl.textContent = state.number;
+    const isNumeric = /^\d+$/.test(state.number);
+    numberEl.classList.toggle("text-mode", !isNumeric);
+  }
   if (labelEl) labelEl.textContent = state.label;
   setBackgroundTheme(state.stage);
+  setHomeIllustration(state.stage);
+}
+
+function setHomeIllustration(stage) {
+  const container = document.querySelector("#home-illustration");
+  if (!container) return;
+
+  const svgMap = {
+    mykonos: "./assets/images/mykonos-sunset.svg",
+    marrakech: "./assets/images/marrakech-night.svg"
+  };
+
+  const src = svgMap[stage];
+  if (!src) {
+    container.innerHTML = "";
+    return;
+  }
+
+  if (container.dataset.currentStage === stage) return;
+  container.dataset.currentStage = stage;
+
+  fetch(src)
+    .then((res) => res.ok ? res.text() : "")
+    .then((svgText) => {
+      if (container.dataset.currentStage === stage) {
+        container.innerHTML = svgText;
+      }
+    })
+    .catch(() => {
+      container.innerHTML = "";
+    });
 }
 
 function createLocalDateFromISO(isoDate) {
@@ -294,7 +346,115 @@ function getItineraryDays(data) {
     });
 }
 
-function appendMetaRow(container, label, value) {
+function addDays(date, days) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function inferSegmentDayOffset(segments) {
+  if (!Array.isArray(segments)) return 0;
+
+  const pattern = /\(\+(\d+)\s*day(?:s)?\)/i;
+  let maxOffset = 0;
+
+  segments.forEach((segment) => {
+    if (typeof segment !== "string") return;
+    const match = segment.match(pattern);
+    if (!match) return;
+    const offset = Number(match[1]);
+    if (Number.isFinite(offset) && offset > maxOffset) {
+      maxOffset = offset;
+    }
+  });
+
+  return maxOffset;
+}
+
+function resolveFlightEndDate(entry, fallbackStartDate) {
+  if (entry && typeof entry.endDate === "string") {
+    const explicitEnd = createLocalDateFromISO(entry.endDate);
+    if (explicitEnd) return explicitEnd;
+  }
+
+  const explicitStart = entry && typeof entry.startDate === "string"
+    ? createLocalDateFromISO(entry.startDate)
+    : null;
+  const startDate = explicitStart || fallbackStartDate;
+  if (!startDate) return null;
+
+  const maxOffset = inferSegmentDayOffset(entry?.segments);
+  return addDays(startDate, maxOffset);
+}
+
+function buildFlightContinuationEntry(entry, sourceDate) {
+  const details = [`Continued travel from ${formatLongDate(sourceDate)}.`];
+  if (Array.isArray(entry.details) && entry.details.length) {
+    details.push(...entry.details);
+  }
+
+  return {
+    ...entry,
+    type: "flight",
+    typeLabel: "FLIGHT",
+    time: "In transit",
+    details,
+    _continuation: true
+  };
+}
+
+function expandCrossDayFlights(days) {
+  const dayMap = new Map(
+    days.map((day) => [
+      day.date,
+      {
+        ...day,
+        entries: Array.isArray(day.entries) ? day.entries.slice() : []
+      }
+    ])
+  );
+
+  const orderedDates = days.map((day) => day.date);
+  orderedDates.forEach((isoDate) => {
+    const sourceDay = dayMap.get(isoDate);
+    const sourceDate = createLocalDateFromISO(isoDate);
+    if (!sourceDay || !sourceDate) return;
+
+    sourceDay.entries.forEach((entry) => {
+      if (!entry || entry._continuation || entry.type !== "flight") return;
+
+      const endDate = resolveFlightEndDate(entry, sourceDate);
+      if (!endDate || endDate <= sourceDate) return;
+
+      let cursor = addDays(sourceDate, 1);
+      while (cursor <= endDate) {
+        const targetDate = toISODate(cursor);
+        const targetDay = dayMap.get(targetDate);
+        if (targetDay) {
+          const alreadyHasFlight = targetDay.entries.some((existing) => {
+            if (!existing || existing._continuation || existing.type !== "flight") return false;
+            if (existing.confirmationCode && entry.confirmationCode) {
+              return existing.confirmationCode === entry.confirmationCode;
+            }
+            if (existing.title && entry.title) {
+              return existing.title === entry.title;
+            }
+            return false;
+          });
+
+          if (!alreadyHasFlight) {
+            targetDay.entries.unshift(buildFlightContinuationEntry(entry, sourceDate));
+          }
+        }
+        cursor = addDays(cursor, 1);
+      }
+    });
+  });
+
+  return orderedDates.map((date) => dayMap.get(date)).filter(Boolean);
+}
+
+function appendMetaRow(container, label, value, isAddress) {
   if (!value) return;
   const row = document.createElement("div");
   row.className = "entry-meta-row";
@@ -303,11 +463,25 @@ function appendMetaRow(container, label, value) {
   key.className = "entry-meta-key";
   key.textContent = label;
 
-  const val = document.createElement("span");
-  val.className = "entry-meta-value";
-  val.textContent = value;
+  if (isAddress) {
+    const link = document.createElement("a");
+    link.className = "entry-map-link";
+    link.href = `https://maps.apple.com/?q=${encodeURIComponent(value)}`;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.textContent = value;
+    const icon = document.createElement("span");
+    icon.className = "entry-map-link-icon";
+    icon.innerHTML = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="7" r="2.5"/><path d="M8 1C5 1 2.5 3.5 2.5 6.5 2.5 10.5 8 15 8 15s5.5-4.5 5.5-8.5C13.5 3.5 11 1 8 1z"/></svg>';
+    link.prepend(icon);
+    row.append(key, link);
+  } else {
+    const val = document.createElement("span");
+    val.className = "entry-meta-value";
+    val.textContent = value;
+    row.append(key, val);
+  }
 
-  row.append(key, val);
   container.appendChild(row);
 }
 
@@ -344,7 +518,7 @@ function renderEntry(entry) {
   meta.className = "entry-meta";
   appendMetaRow(meta, "Provider", entry.provider);
   appendMetaRow(meta, "Location", entry.location);
-  appendMetaRow(meta, "Address", entry.address);
+  appendMetaRow(meta, "Address", entry.address, true);
   appendMetaRow(meta, "Pickup", entry.pickup);
   appendMetaRow(meta, "Drop-off", entry.dropoff);
   appendMetaRow(meta, "Driver", entry.driver);
@@ -413,6 +587,7 @@ function setActiveJumpChip(targets, activeChip) {
   targets.forEach(({ chip }) => {
     chip.classList.toggle("active", chip === activeChip);
   });
+  activeChip.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
 }
 
 function setupItineraryJumpObserver(targets) {
@@ -453,7 +628,7 @@ function renderItinerary(data) {
   wrapper.innerHTML = "";
   if (jump) jump.innerHTML = "";
 
-  const days = getItineraryDays(data);
+  const days = expandCrossDayFlights(getItineraryDays(data));
   if (!days.length) {
     const empty = document.createElement("article");
     empty.className = "entry-card entry-empty";
@@ -463,24 +638,39 @@ function renderItinerary(data) {
   }
 
   const jumpTargets = [];
+  const todayISO = toISODate(new Date());
 
   days.forEach((day, index) => {
     const dateObj = createLocalDateFromISO(day.date) || new Date();
+    const isToday = day.date === todayISO;
     const section = document.createElement("section");
-    section.className = "day-section";
+    section.className = "day-section" + (isToday ? " is-today" : "");
     section.id = `it-day-${day.date || index}`;
 
     const header = document.createElement("div");
     header.className = "day-header";
 
+    const titleRow = document.createElement("div");
+    titleRow.style.display = "flex";
+    titleRow.style.alignItems = "center";
+    titleRow.style.gap = "0.5rem";
+
     const title = document.createElement("h3");
     title.textContent = day.title || day.location || "Day Plan";
+    titleRow.appendChild(title);
+
+    if (isToday) {
+      const badge = document.createElement("span");
+      badge.className = "today-badge";
+      badge.textContent = "Today";
+      titleRow.appendChild(badge);
+    }
 
     const dateText = document.createElement("p");
     dateText.className = "day-date";
     dateText.textContent = formatLongDate(dateObj);
 
-    header.append(title, dateText);
+    header.append(titleRow, dateText);
     if (day.subtitle) {
       const subtitle = document.createElement("p");
       subtitle.className = "day-subtitle";
@@ -546,14 +736,28 @@ function setupTabs() {
   buttons.forEach((button) => {
     button.addEventListener("click", () => {
       const targetTab = button.getAttribute("data-tab");
+      const currentPanel = Object.values(panels).find((p) => p.classList.contains("active"));
+      const nextPanel = panels[targetTab];
+
+      if (currentPanel === nextPanel) return;
+
       buttons.forEach((b) => {
         const isActive = b === button;
         b.classList.toggle("active", isActive);
         b.setAttribute("aria-selected", String(isActive));
       });
 
-      Object.entries(panels).forEach(([key, panel]) => {
-        panel.classList.toggle("active", key === targetTab);
+      currentPanel.classList.remove("active");
+      nextPanel.classList.add("active");
+      nextPanel.style.opacity = "0";
+      nextPanel.style.transition = "opacity 180ms ease";
+
+      requestAnimationFrame(() => {
+        nextPanel.style.opacity = "1";
+        nextPanel.addEventListener("transitionend", () => {
+          nextPanel.style.opacity = "";
+          nextPanel.style.transition = "";
+        }, { once: true });
       });
     });
   });
@@ -561,6 +765,7 @@ function setupTabs() {
 
 function setupAuthHandlers(onUnlock) {
   const form = document.querySelector("#auth-form");
+  const card = document.querySelector(".auth-card");
   const passphraseInput = document.querySelector("#auth-passphrase");
   const rememberInput = document.querySelector("#auth-remember");
   const submitButton = document.querySelector("#auth-submit");
@@ -572,6 +777,7 @@ function setupAuthHandlers(onUnlock) {
     if (!passphrase) return;
 
     submitButton.disabled = true;
+    submitButton.classList.add("loading");
     setAuthStatus("Unlocking...");
 
     try {
@@ -582,8 +788,14 @@ function setupAuthHandlers(onUnlock) {
       onUnlock(data);
     } catch (error) {
       setAuthStatus(error?.message || "Unlock failed.");
+      if (card) {
+        card.classList.remove("shake");
+        void card.offsetWidth;
+        card.classList.add("shake");
+      }
     } finally {
       submitButton.disabled = false;
+      submitButton.classList.remove("loading");
     }
   });
 }

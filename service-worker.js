@@ -1,5 +1,5 @@
-const CACHE_NAME = "honeymoon-static-v19";
-const RUNTIME_CACHE = "honeymoon-runtime-v19";
+const CACHE_NAME = "honeymoon-static-v21";
+const RUNTIME_CACHE = "honeymoon-runtime-v21";
 
 const CORE_ASSETS = [
   "./",
@@ -68,6 +68,24 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  const requestUrl = new URL(event.request.url);
+  const isEncryptedData = requestUrl.pathname.endsWith("/trip.enc.json");
+
+  if (isEncryptedData) {
+    event.respondWith(
+      fetch(event.request)
+        .then((networkResponse) => {
+          const responseClone = networkResponse.clone();
+          caches.open(RUNTIME_CACHE).then((cache) => {
+            cache.put(event.request, responseClone);
+          });
+          return networkResponse;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then((cached) => {
       if (cached) return cached;
@@ -80,7 +98,7 @@ self.addEventListener("fetch", (event) => {
           });
           return networkResponse;
         })
-        .catch(() => caches.match("./offline.html"));
+        .catch(() => undefined);
     })
   );
 });

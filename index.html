@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Honeymoon</title>
-    <meta name="theme-color" content="#f6f8fb" />
+    <meta name="theme-color" content="#1f89c7" />
     <meta name="description" content="Offline honeymoon guide for Mykonos and Marrakech." />
 
     <link rel="manifest" href="./manifest.webmanifest" />
@@ -13,6 +13,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Honeymoon" />
 
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&display=swap" />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body class="app-locked">
@@ -21,15 +24,24 @@
 
     <section id="auth-gate" class="auth-gate">
       <form id="auth-form" class="auth-card">
-        <h2>Private Trip Vault</h2>
-        <p id="auth-status">Enter passphrase to unlock your honeymoon details.</p>
-        <label for="auth-passphrase">Passphrase</label>
-        <input id="auth-passphrase" type="password" autocomplete="current-password" required />
+        <div class="auth-icon" aria-hidden="true">
+          <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M24 8 C24 8 20 2 14 2 C6 2 2 8 2 14 C2 24 14 34 24 44 C34 34 46 24 46 14 C46 8 42 2 34 2 C28 2 24 8 24 8Z" fill="url(#auth-heart)"/>
+            <defs><linearGradient id="auth-heart" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ff7eb3"/><stop offset="100%" stop-color="#e04472"/></linearGradient></defs>
+          </svg>
+        </div>
+        <h2>Our Adventure Awaits</h2>
+        <p id="auth-status">Enter our secret phrase to unlock the details.</p>
+        <label for="auth-passphrase">Secret Phrase</label>
+        <input id="auth-passphrase" type="password" autocomplete="current-password" required placeholder="Enter phrase..." />
         <label class="remember-row">
           <input id="auth-remember" type="checkbox" checked />
           Remember this device for 30 days
         </label>
-        <button id="auth-submit" type="submit">Unlock</button>
+        <button id="auth-submit" type="submit">
+          <span class="btn-text">Unlock</span>
+          <span class="btn-spinner" aria-hidden="true"></span>
+        </button>
       </form>
     </section>
 
@@ -40,6 +52,7 @@
           <h1 id="countdown-number" class="countdown-number">0</h1>
           <p id="countdown-label" class="countdown-label">days</p>
         </article>
+        <div id="home-illustration" class="home-illustration"></div>
       </section>
 
       <section class="tab-panel" id="itinerary-panel">
