@@ -21,6 +21,11 @@
   box-sizing: border-box;
 }
 
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 html,
 body,
 #root {
@@ -36,6 +41,7 @@ body {
   font-family: 'Plus Jakarta Sans', 'Avenir Next', 'Helvetica Neue', sans-serif;
   color: var(--ink-900);
   background: var(--theme-page-tone, #eef1ef);
+  overflow-x: hidden;
 }
 
 a {
@@ -83,7 +89,12 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.9rem;
   color: var(--theme-on-image, #fff);
+}
+
+.status-rail > div:first-child {
+  min-width: 0;
 }
 
 .status-rail p {
@@ -92,6 +103,7 @@ button {
   letter-spacing: 0.16em;
   text-transform: uppercase;
   opacity: 0.78;
+  overflow-wrap: anywhere;
 }
 
 .status-rail span {
@@ -99,9 +111,11 @@ button {
   margin-top: 0.35rem;
   font-size: 1rem;
   font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
 .status-pill {
+  flex-shrink: 0;
   padding: 0.45rem 0.75rem;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.18);
@@ -157,6 +171,7 @@ button {
 .hero-copy {
   max-width: 20rem;
   padding-top: 10rem;
+  min-width: 0;
 }
 
 .hero-eyebrow,
@@ -188,12 +203,15 @@ button {
 .hero-title {
   font-size: clamp(2.8rem, 10vw, 4.75rem);
   color: var(--ink-900);
+  overflow-wrap: anywhere;
 }
 
 .countdown-wrap {
   display: inline-flex;
   align-items: flex-end;
+  flex-wrap: wrap;
   gap: 0.55rem;
+  max-width: 100%;
 }
 
 .countdown-value {
@@ -223,6 +241,7 @@ button {
   color: var(--ink-700);
   font-size: 1.05rem;
   line-height: 1.55;
+  overflow-wrap: anywhere;
 }
 
 .preview-picker {
@@ -235,6 +254,7 @@ button {
   background: rgba(255, 255, 255, 0.68);
   border: 1px solid rgba(255, 255, 255, 0.66);
   box-shadow: var(--shadow-card);
+  max-width: 100%;
 }
 
 .preview-picker span {
@@ -332,13 +352,22 @@ button {
 }
 
 .itinerary-header-card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.9rem;
   padding: 1rem 1.1rem 0.95rem;
   border-radius: 1.4rem 1.4rem 1rem 1rem;
+}
+
+.itinerary-header-card > div:first-child {
+  min-width: 0;
 }
 
 .itinerary-header-card h2 {
   font-size: 2.4rem;
   color: var(--ink-900);
+  overflow-wrap: anywhere;
 }
 
 .section-badge {
@@ -414,6 +443,7 @@ button {
 .day-card h3 {
   font-size: 2rem;
   color: var(--ink-900);
+  overflow-wrap: anywhere;
 }
 
 .event-stack {
@@ -434,6 +464,7 @@ button {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 0.75rem;
 }
 
@@ -441,10 +472,16 @@ button {
   margin-top: 0.85rem;
 }
 
+.event-card-heading > div,
+.event-card-topline > * {
+  min-width: 0;
+}
+
 .event-card h4 {
   font-size: 1.65rem;
   line-height: 1.02;
   color: var(--ink-900);
+  overflow-wrap: anywhere;
 }
 
 .event-chip {
@@ -465,9 +502,14 @@ button {
 .event-time {
   font-weight: 800;
   color: var(--ink-900);
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .code-chip {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
   margin-top: 0.75rem;
   padding: 0.45rem 0.8rem;
   border-radius: 999px;
@@ -475,6 +517,7 @@ button {
   border: 1px solid rgba(38, 61, 82, 0.12);
   color: var(--theme-accent);
   font-weight: 800;
+  overflow-wrap: anywhere;
 }
 
 .event-meta-grid {
@@ -492,6 +535,8 @@ button {
   font-size: 1rem;
   line-height: 1.5;
   text-decoration: none;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .timeline-block,
@@ -516,6 +561,7 @@ button {
 .segment-item {
   display: grid;
   gap: 0.3rem;
+  min-width: 0;
 }
 
 .segment-item p,
@@ -523,19 +569,28 @@ button {
   margin: 0;
   color: var(--ink-700);
   line-height: 1.5;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .segment-route {
-  display: inline-grid;
-  grid-template-columns: auto 1fr auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: 0.65rem;
+  width: 100%;
 }
 
 .segment-route span {
   display: block;
   height: 1px;
   background: color-mix(in srgb, var(--theme-accent) 35%, transparent);
+}
+
+.segment-route strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .empty-state {
@@ -631,15 +686,94 @@ button {
     width: 100%;
   }
 
+  .status-rail {
+    padding: calc(var(--safe-top) + 0.85rem) 1rem 0;
+    align-items: flex-start;
+  }
+
+  .app-shell {
+    padding: 0.85rem 1rem calc(var(--tabbar-height) + var(--safe-bottom) + 1rem);
+  }
+
   .hero-copy {
-    padding-top: 8rem;
+    max-width: 100%;
+    padding-top: 6.5rem;
+  }
+
+  .hero-surface {
+    min-height: calc(100vh - var(--safe-top) - var(--tabbar-height) - var(--safe-bottom) - 4.75rem);
+    padding: 1.1rem;
+  }
+
+  .countdown-value {
+    font-size: clamp(3.6rem, 20vw, 5.6rem);
+  }
+
+  .countdown-unit {
+    padding-bottom: 0.55rem;
+    font-size: 0.92rem;
+  }
+
+  .itinerary-header-card {
+    padding: 0.95rem 1rem 0.9rem;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .itinerary-header-card h2 {
+    font-size: 2rem;
+  }
+
+  .day-card {
+    padding: 1rem;
+  }
+
+  .day-card h3 {
+    font-size: 1.6rem;
   }
 
   .event-meta-grid {
     grid-template-columns: 1fr;
   }
 
+  .event-card {
+    padding: 0.95rem;
+  }
+
+  .event-card h4 {
+    font-size: 1.4rem;
+  }
+
+  .event-card-topline {
+    gap: 0.55rem;
+  }
+
+  .event-time {
+    font-size: 0.95rem;
+  }
+
+  .segment-route {
+    grid-template-columns: 1fr;
+    gap: 0.35rem;
+  }
+
+  .segment-route span {
+    display: none;
+  }
+
+  .bottom-tabs {
+    padding: 0.6rem 1rem calc(var(--safe-bottom) + 0.45rem);
+  }
+
   .update-toast {
     width: calc(100% - 2rem);
+    bottom: calc(var(--tabbar-height) + var(--safe-bottom) + 0.5rem);
+    padding: 0.8rem 0.9rem;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .toast-button {
+    width: 100%;
   }
 }
