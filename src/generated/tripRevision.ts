@@ -1,0 +1,8 @@
+export const tripRevision = {
+  "appVersion": "1.0.0",
+  "schemaVersion": 1,
+  "contentVersion": "74d6bf6630",
+  "buildTime": "2026-03-21T23:21:58.519Z",
+  "encryptedPath": "./data/trip.74d6bf6630.enc.json",
+  "sourceFingerprint": "07b8fb2e1e90dbaa835283aff7f16efdbf631ac51ac1022fee7f10290fc0a3d8"
+} as const;
