@@ -1,7 +1,7 @@
 :root {
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
-  --shell-width: min(100%, 34rem);
+  --shell-max-width: 34rem;
   --surface-bg: rgba(249, 246, 239, 0.9);
   --surface-border: rgba(255, 255, 255, 0.42);
   --ink-900: #142236;
@@ -30,6 +30,7 @@ html,
 body,
 #root {
   min-height: 100%;
+  width: 100%;
 }
 
 html {
@@ -83,7 +84,8 @@ button {
 .status-rail {
   position: relative;
   z-index: 2;
-  width: var(--shell-width);
+  width: min(100%, var(--shell-max-width));
+  max-width: 100%;
   margin: 0 auto;
   padding: calc(var(--safe-top) + 1rem) 1.25rem 0;
   display: flex;
@@ -114,21 +116,11 @@ button {
   overflow-wrap: anywhere;
 }
 
-.status-pill {
-  flex-shrink: 0;
-  padding: 0.45rem 0.75rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.24);
-  backdrop-filter: blur(18px);
-  font-size: 0.8rem;
-  font-weight: 700;
-}
-
 .app-shell {
   position: relative;
   z-index: 1;
-  width: var(--shell-width);
+  width: min(100%, var(--shell-max-width));
+  max-width: 100%;
   margin: 0 auto;
   padding: 1rem 1.25rem calc(var(--tabbar-height) + var(--safe-bottom) + 1.25rem);
 }
@@ -150,6 +142,7 @@ button {
   border: 1px solid var(--surface-border);
   box-shadow: var(--shadow-soft);
   backdrop-filter: blur(24px);
+  max-width: 100%;
 }
 
 .home-screen {
@@ -429,11 +422,14 @@ button {
 .day-stack {
   display: grid;
   gap: 1rem;
+  min-width: 0;
 }
 
 .day-card {
   padding: 1.2rem;
   border-radius: var(--radius-xl);
+  min-width: 0;
+  overflow: clip;
 }
 
 .day-card-header {
@@ -457,6 +453,8 @@ button {
   border: 1px solid rgba(34, 63, 88, 0.08);
   box-shadow: var(--shadow-card);
   padding: 1rem;
+  min-width: 0;
+  overflow: clip;
 }
 
 .event-card-topline,
@@ -599,11 +597,13 @@ button {
 
 .bottom-tabs {
   position: fixed;
-  left: 50%;
+  left: 0;
+  right: 0;
   bottom: 0;
   z-index: 5;
-  transform: translateX(-50%);
-  width: var(--shell-width);
+  width: min(100%, var(--shell-max-width));
+  max-width: 100%;
+  margin-inline: auto;
   padding: 0.75rem 1.25rem calc(var(--safe-bottom) + 0.6rem);
   background: linear-gradient(180deg, rgba(242, 238, 231, 0.12), rgba(242, 238, 231, 0.94) 28%, rgba(242, 238, 231, 0.98));
   backdrop-filter: blur(22px);
@@ -647,11 +647,13 @@ button {
 
 .update-toast {
   position: fixed;
-  left: 50%;
+  left: 1rem;
+  right: 1rem;
   bottom: calc(var(--tabbar-height) + var(--safe-bottom) + 0.8rem);
   z-index: 6;
-  transform: translateX(-50%);
-  width: calc(var(--shell-width) - 2.5rem);
+  width: auto;
+  max-width: calc(var(--shell-max-width) - 2rem);
+  margin-inline: auto;
   padding: 0.9rem 1rem;
   border-radius: 1.15rem;
   display: flex;
@@ -684,6 +686,7 @@ button {
   .app-shell,
   .bottom-tabs {
     width: 100%;
+    max-width: 100%;
   }
 
   .status-rail {

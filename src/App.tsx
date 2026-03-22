@@ -25,24 +25,11 @@ export default function App() {
     const today = new Date();
     return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
   });
-  const [isOffline, setIsOffline] = useState(!navigator.onLine);
-
   const {
     needRefresh: [needRefresh],
     offlineReady: [offlineReady, setOfflineReady],
     updateServiceWorker
   } = useRegisterSW();
-
-  useEffect(() => {
-    const online = () => setIsOffline(false);
-    const offline = () => setIsOffline(true);
-    window.addEventListener('online', online);
-    window.addEventListener('offline', offline);
-    return () => {
-      window.removeEventListener('online', online);
-      window.removeEventListener('offline', offline);
-    };
-  }, []);
 
   useEffect(() => {
     let active = true;
@@ -136,7 +123,6 @@ export default function App() {
               <p>{trip.tripTitle}</p>
               <span>{homeDisplay?.secondary}</span>
             </div>
-            <div className="status-pill">{isOffline ? 'Offline' : 'Online'}</div>
           </header>
           <main className="app-shell">
             {tab === 'home' ? (
