@@ -173,7 +173,6 @@ export function ItineraryScreen({ trip }: ItineraryScreenProps) {
             <h2>Itinerary</h2>
             <p className="section-subtitle">{trip.tripDateRange}</p>
           </div>
-          <div className="section-badge">Offline-ready</div>
         </div>
         <div ref={stripRef} className="day-strip" aria-label="Jump to trip day">
           {trip.days.map((day) => {
