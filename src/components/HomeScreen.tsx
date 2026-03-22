@@ -4,17 +4,15 @@ import { buildHomeDisplay } from '../lib/theme';
 interface HomeScreenProps {
   trip: TripData;
   referenceDate: Date;
-  previewDate: string;
-  onPreviewDateChange: (value: string) => void;
 }
 
-export function HomeScreen({ trip, referenceDate, previewDate, onPreviewDateChange }: HomeScreenProps) {
+export function HomeScreen({ trip, referenceDate }: HomeScreenProps) {
   const display = buildHomeDisplay(trip, referenceDate);
 
   return (
     <section className="home-screen panel-shell active-screen">
-      <div className="hero-surface">
-        <div className="hero-copy">
+      <div className="home-overlay">
+        <div className="hero-copy floating-copy">
           <p className="hero-eyebrow">{display.eyebrow}</p>
           {display.mode === 'countdown' ? (
             <>
@@ -31,10 +29,6 @@ export function HomeScreen({ trip, referenceDate, previewDate, onPreviewDateChan
             </>
           )}
         </div>
-        <label className="preview-picker">
-          <span>Preview date</span>
-          <input type="date" value={previewDate} onChange={(event) => onPreviewDateChange(event.target.value)} />
-        </label>
       </div>
     </section>
   );

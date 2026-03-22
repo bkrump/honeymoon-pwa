@@ -21,13 +21,8 @@ export default function App() {
   const [payload, setPayload] = useState<EncryptedTripPayload | null>(null);
   const [status, setStatus] = useState<'booting' | 'locked' | 'unlocking' | 'ready' | 'error'>('booting');
   const [message, setMessage] = useState('Preparing the offline guide…');
-  const [previewDate, setPreviewDate] = useState(() => {
-    const today = new Date();
-    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-  });
   const {
     needRefresh: [needRefresh],
-    offlineReady: [offlineReady, setOfflineReady],
     updateServiceWorker
   } = useRegisterSW();
 
@@ -91,7 +86,7 @@ export default function App() {
     }
   }
 
-  const referenceDate = useMemo(() => new Date(`${previewDate}T12:00:00`), [previewDate]);
+  const referenceDate = useMemo(() => new Date(), []);
   const activeTheme = useMemo(() => {
     if (!trip) return themeVisuals.pretrip;
     const band = getThemeBandForDate(trip.themeBands, referenceDate);
@@ -121,12 +116,12 @@ export default function App() {
           <header className="status-rail">
             <div>
               <p>{trip.tripTitle}</p>
-              <span>{homeDisplay?.secondary}</span>
+              <span>{trip.tripDateRange}</span>
             </div>
           </header>
           <main className="app-shell">
             {tab === 'home' ? (
-              <HomeScreen trip={trip} referenceDate={referenceDate} previewDate={previewDate} onPreviewDateChange={setPreviewDate} />
+              <HomeScreen trip={trip} referenceDate={referenceDate} />
             ) : (
               <ItineraryScreen trip={trip} />
             )}
@@ -134,9 +129,7 @@ export default function App() {
           <BottomTabs activeTab={tab} onChange={setTab} />
           <UpdateToast
             needRefresh={needRefresh}
-            offlineReady={offlineReady}
             onRefresh={() => void updateServiceWorker(true)}
-            onDismissReady={() => setOfflineReady(false)}
           />
         </>
       )}

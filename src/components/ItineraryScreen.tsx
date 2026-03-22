@@ -105,11 +105,22 @@ function EventCard({ event }: { event: TripEvent }) {
   );
 }
 
-function centerChip(container: HTMLDivElement | null, button: HTMLButtonElement | null, behavior: ScrollBehavior = 'smooth') {
+function revealChip(container: HTMLDivElement | null, button: HTMLButtonElement | null, behavior: ScrollBehavior = 'smooth') {
   if (!container || !button) return;
-  const left = button.offsetLeft - (container.clientWidth - button.clientWidth) / 2;
+  const chipStart = button.offsetLeft;
+  const chipEnd = chipStart + button.offsetWidth;
+  const viewStart = container.scrollLeft;
+  const viewEnd = viewStart + container.clientWidth;
+
+  if (chipStart >= viewStart && chipEnd <= viewEnd) return;
+
+  if (chipStart < viewStart) {
+    container.scrollTo({ left: Math.max(0, chipStart - 12), behavior });
+    return;
+  }
+
   const max = Math.max(0, container.scrollWidth - container.clientWidth);
-  container.scrollTo({ left: Math.max(0, Math.min(left, max)), behavior });
+  container.scrollTo({ left: Math.min(max, chipEnd - container.clientWidth + 12), behavior });
 }
 
 export function ItineraryScreen({ trip }: ItineraryScreenProps) {
@@ -125,8 +136,8 @@ export function ItineraryScreen({ trip }: ItineraryScreenProps) {
   }, [initialDate]);
 
   useEffect(() => {
-    centerChip(stripRef.current, chipRefs.current[selectedDate], 'auto');
-  }, [selectedDate]);
+    revealChip(stripRef.current, chipRefs.current[initialDate], 'auto');
+  }, [initialDate]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -156,7 +167,7 @@ export function ItineraryScreen({ trip }: ItineraryScreenProps) {
 
   function jumpToDay(day: TripDay) {
     setSelectedDate(day.date);
-    centerChip(stripRef.current, chipRefs.current[day.date]);
+    revealChip(stripRef.current, chipRefs.current[day.date]);
     const target = sectionRefs.current[day.date];
     const stickyHeight = headerRef.current?.offsetHeight ?? 0;
     if (!target) return;

@@ -151,24 +151,27 @@ button {
 
 .home-screen {
   display: flex;
-  align-items: flex-end;
+  align-items: stretch;
 }
 
-.hero-surface {
+.home-overlay {
   position: relative;
   width: 100%;
-  min-height: calc(100vh - var(--safe-top) - var(--tabbar-height) - var(--safe-bottom) - 7rem);
-  padding: 1.4rem;
-  border-radius: var(--radius-xl);
+  min-height: calc(100vh - var(--safe-top) - var(--tabbar-height) - var(--safe-bottom) - 5rem);
+  padding: 1.2rem 0 0;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-end;
 }
 
 .hero-copy {
   max-width: 20rem;
-  padding-top: 10rem;
   min-width: 0;
+}
+
+.floating-copy {
+  max-width: min(23rem, calc(100vw - 3rem));
+  padding: 0 0 1.35rem;
 }
 
 .hero-eyebrow,
@@ -199,8 +202,9 @@ button {
 
 .hero-title {
   font-size: clamp(2.8rem, 10vw, 4.75rem);
-  color: var(--ink-900);
+  color: var(--theme-on-image, #ffffff);
   overflow-wrap: anywhere;
+  text-shadow: 0 10px 28px rgba(10, 18, 31, 0.32);
 }
 
 .countdown-wrap {
@@ -216,7 +220,8 @@ button {
   font-size: clamp(4.25rem, 22vw, 7rem);
   line-height: 0.85;
   letter-spacing: -0.07em;
-  color: var(--ink-900);
+  color: var(--theme-on-image, #ffffff);
+  text-shadow: 0 14px 36px rgba(10, 18, 31, 0.4);
 }
 
 .countdown-unit {
@@ -225,7 +230,7 @@ button {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.16em;
-  color: var(--ink-700);
+  color: color-mix(in srgb, var(--theme-on-image) 84%, transparent);
 }
 
 .hero-support,
@@ -239,6 +244,12 @@ button {
   font-size: 1.05rem;
   line-height: 1.55;
   overflow-wrap: anywhere;
+}
+
+.home-screen .hero-eyebrow,
+.home-screen .hero-support {
+  color: color-mix(in srgb, var(--theme-on-image) 92%, transparent);
+  text-shadow: 0 8px 24px rgba(10, 18, 31, 0.28);
 }
 
 .preview-picker {
@@ -399,8 +410,11 @@ button {
   max-width: 100%;
   overflow-x: auto;
   padding: 0.75rem 0.15rem 0.2rem;
+  padding-inline: 0.2rem;
   scrollbar-width: none;
   overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: 0.2rem;
 }
 
 .day-strip::-webkit-scrollbar {
@@ -417,6 +431,7 @@ button {
   text-align: left;
   color: var(--ink-700);
   box-shadow: 0 8px 22px rgba(18, 28, 44, 0.08);
+  scroll-snap-align: start;
 }
 
 .day-chip span {
@@ -717,21 +732,33 @@ button {
 
   .hero-copy {
     max-width: 100%;
-    padding-top: 6.5rem;
   }
 
-  .hero-surface {
-    min-height: calc(100vh - var(--safe-top) - var(--tabbar-height) - var(--safe-bottom) - 4.75rem);
-    padding: 1.1rem;
+  .home-overlay {
+    min-height: calc(100vh - var(--safe-top) - var(--tabbar-height) - var(--safe-bottom) - 3.75rem);
+    padding-top: 0.4rem;
+  }
+
+  .floating-copy {
+    max-width: calc(100vw - 2rem);
+    padding-bottom: 1rem;
   }
 
   .countdown-value {
-    font-size: clamp(3.6rem, 20vw, 5.6rem);
+    font-size: clamp(4.5rem, 24vw, 6.2rem);
   }
 
   .countdown-unit {
     padding-bottom: 0.55rem;
     font-size: 0.92rem;
+  }
+
+  .hero-title {
+    font-size: clamp(3.2rem, 17vw, 4.8rem);
+  }
+
+  .hero-support {
+    font-size: 1rem;
   }
 
   .itinerary-header-card {
