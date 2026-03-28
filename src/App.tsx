@@ -103,6 +103,7 @@ export default function App() {
           '--theme-accent': activeTheme.accent,
           '--theme-surface': activeTheme.surface,
           '--theme-page-tone': activeTheme.pageTone,
+          '--theme-image-position': activeTheme.position,
           '--theme-tab-tint': activeTheme.tabTint,
           '--theme-on-image': activeTheme.text
         } as CSSProperties
@@ -119,7 +120,7 @@ export default function App() {
               <span>{trip.tripDateRange}</span>
             </div>
           </header>
-          <main className="app-shell">
+          <main className={tab === 'home' ? 'app-shell app-shell-home' : 'app-shell'}>
             {tab === 'home' ? (
               <HomeScreen trip={trip} referenceDate={referenceDate} />
             ) : (

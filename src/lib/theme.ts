@@ -7,6 +7,7 @@ import posttripBg from '../../assets/images/posttrip-bg.jpg';
 
 export interface ThemeVisual {
   image: string;
+  position: string;
   accent: string;
   text: string;
   overlay: string;
@@ -18,6 +19,7 @@ export interface ThemeVisual {
 export const themeVisuals: Record<ThemeId, ThemeVisual> = {
   pretrip: {
     image: pretripBg,
+    position: 'center center',
     accent: '#79955d',
     text: '#f8f4ec',
     overlay: 'linear-gradient(180deg, rgba(38, 49, 26, 0.18), rgba(34, 47, 27, 0.62) 54%, rgba(21, 25, 17, 0.82))',
@@ -27,6 +29,7 @@ export const themeVisuals: Record<ThemeId, ThemeVisual> = {
   },
   mykonos: {
     image: mykonosBg,
+    position: 'center center',
     accent: '#0f6db3',
     text: '#ffffff',
     overlay: 'linear-gradient(180deg, rgba(15, 78, 122, 0.18), rgba(10, 51, 90, 0.56) 52%, rgba(7, 26, 47, 0.82))',
@@ -36,6 +39,7 @@ export const themeVisuals: Record<ThemeId, ThemeVisual> = {
   },
   marrakech: {
     image: marrakechBg,
+    position: 'center center',
     accent: '#a5582e',
     text: '#fff8f0',
     overlay: 'linear-gradient(180deg, rgba(72, 31, 10, 0.18), rgba(86, 37, 12, 0.62) 50%, rgba(33, 15, 8, 0.86))',
@@ -45,6 +49,7 @@ export const themeVisuals: Record<ThemeId, ThemeVisual> = {
   },
   posttrip: {
     image: posttripBg,
+    position: 'center center',
     accent: '#7c4b38',
     text: '#fff8f0',
     overlay: 'linear-gradient(180deg, rgba(18, 22, 35, 0.22), rgba(41, 31, 31, 0.66) 55%, rgba(18, 19, 25, 0.88))',

@@ -10,7 +10,7 @@ export function HomeScreen({ trip, referenceDate }: HomeScreenProps) {
   const display = buildHomeDisplay(trip, referenceDate);
 
   return (
-    <section className="home-screen panel-shell active-screen">
+    <section className="home-screen active-screen">
       <div className="home-overlay">
         <div className="hero-copy floating-copy">
           <p className="hero-eyebrow">{display.eyebrow}</p>

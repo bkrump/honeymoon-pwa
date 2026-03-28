@@ -34,11 +34,13 @@ body,
 }
 
 html {
+  min-height: 100dvh;
   background: var(--theme-page-tone, #eef1ef);
 }
 
 body {
   margin: 0;
+  min-height: 100dvh;
   font-family: 'Plus Jakarta Sans', 'Avenir Next', 'Helvetica Neue', sans-serif;
   color: var(--ink-900);
   background: var(--theme-page-tone, #eef1ef);
@@ -60,18 +62,18 @@ button {
 
 .app-frame {
   position: relative;
-  min-height: 100vh;
+  min-height: 100dvh;
   background: var(--theme-page-tone, #eef1ef);
   overflow-x: hidden;
 }
 
 .backdrop-scene {
   position: fixed;
-  inset: -4vh 0;
+  inset: 0;
   z-index: 0;
   background-size: cover;
-  background-position: center;
-  transform: scale(1.04);
+  background-position: var(--theme-image-position, center center);
+  background-repeat: no-repeat;
 }
 
 .backdrop-scene::after {
@@ -125,6 +127,10 @@ button {
   padding: 1rem 1.25rem calc(var(--tabbar-height) + var(--safe-bottom) + 1.25rem);
 }
 
+.app-shell-home {
+  padding-bottom: 0;
+}
+
 .panel-shell {
   border-radius: calc(var(--radius-xl) + 0.2rem);
   min-width: 0;
@@ -150,28 +156,45 @@ button {
 }
 
 .home-screen {
+  position: relative;
   display: flex;
   align-items: stretch;
+  min-width: 0;
+}
+
+.home-screen.active-screen {
+  min-height: calc(100dvh - var(--safe-top) - 8rem);
 }
 
 .home-overlay {
   position: relative;
   width: 100%;
-  min-height: calc(100vh - var(--safe-top) - var(--tabbar-height) - var(--safe-bottom) - 5rem);
-  padding: 1.2rem 0 0;
+  min-height: calc(100dvh - var(--safe-top) - 8rem);
+  padding: 0;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
 }
 
+.home-overlay::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: clamp(8rem, 18vh, 12rem);
+  background: linear-gradient(180deg, rgba(9, 15, 24, 0), rgba(9, 15, 24, 0.08) 46%, rgba(9, 15, 24, 0.22));
+  pointer-events: none;
+}
+
 .hero-copy {
+  position: relative;
+  z-index: 1;
   max-width: 20rem;
   min-width: 0;
 }
 
 .floating-copy {
-  max-width: min(23rem, calc(100vw - 3rem));
-  padding: 0 0 1.35rem;
+  max-width: min(24rem, calc(100vw - 2.5rem));
+  padding: 0 0 calc(var(--tabbar-height) + var(--safe-bottom) + 1.55rem);
 }
 
 .hero-eyebrow,
@@ -211,7 +234,7 @@ button {
   display: inline-flex;
   align-items: flex-end;
   flex-wrap: wrap;
-  gap: 0.55rem;
+  gap: 0.35rem 0.55rem;
   max-width: 100%;
 }
 
@@ -250,6 +273,10 @@ button {
 .home-screen .hero-support {
   color: color-mix(in srgb, var(--theme-on-image) 92%, transparent);
   text-shadow: 0 8px 24px rgba(10, 18, 31, 0.28);
+}
+
+.home-screen .hero-support {
+  max-width: 16rem;
 }
 
 .preview-picker {
@@ -636,19 +663,20 @@ button {
   width: min(100%, var(--shell-max-width));
   max-width: 100%;
   margin-inline: auto;
-  padding: 0.75rem 1.25rem calc(var(--safe-bottom) + 0.6rem);
-  background: linear-gradient(180deg, rgba(242, 238, 231, 0.12), rgba(242, 238, 231, 0.94) 28%, rgba(242, 238, 231, 0.98));
-  backdrop-filter: blur(22px);
+  padding: 0.55rem 1.2rem calc(var(--safe-bottom) + 0.45rem);
+  background: linear-gradient(180deg, rgba(250, 247, 241, 0.18), rgba(250, 247, 241, 0.84) 32%, rgba(250, 247, 241, 0.94));
+  backdrop-filter: saturate(165%) blur(28px);
+  box-shadow: 0 -12px 36px rgba(16, 24, 36, 0.1);
 }
 
 .bottom-tabs::before {
   content: '';
   position: absolute;
   top: 0;
-  left: 1.25rem;
-  right: 1.25rem;
+  left: 0;
+  right: 0;
   height: 1px;
-  background: rgba(33, 55, 78, 0.08);
+  background: rgba(33, 55, 78, 0.07);
 }
 
 .tab-item {
@@ -657,12 +685,12 @@ button {
   border: 0;
   background: transparent;
   color: rgba(43, 69, 95, 0.55);
-  min-height: 3.35rem;
+  min-height: 3.1rem;
   display: inline-flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.25rem;
+  gap: 0.18rem;
   font-size: 0.74rem;
   font-weight: 800;
   letter-spacing: 0.02em;
@@ -730,18 +758,21 @@ button {
     padding: 0.85rem 1rem calc(var(--tabbar-height) + var(--safe-bottom) + 1rem);
   }
 
+  .app-shell-home {
+    padding-bottom: 0;
+  }
+
   .hero-copy {
     max-width: 100%;
   }
 
   .home-overlay {
-    min-height: calc(100vh - var(--safe-top) - var(--tabbar-height) - var(--safe-bottom) - 3.75rem);
-    padding-top: 0.4rem;
+    min-height: calc(100dvh - var(--safe-top) - 7.1rem);
   }
 
   .floating-copy {
     max-width: calc(100vw - 2rem);
-    padding-bottom: 1rem;
+    padding-bottom: calc(var(--tabbar-height) + var(--safe-bottom) + 1.25rem);
   }
 
   .countdown-value {
@@ -822,7 +853,7 @@ button {
   }
 
   .bottom-tabs {
-    padding: 0.6rem 1rem calc(var(--safe-bottom) + 0.45rem);
+    padding: 0.45rem 1rem calc(var(--safe-bottom) + 0.38rem);
   }
 
   .update-toast {
