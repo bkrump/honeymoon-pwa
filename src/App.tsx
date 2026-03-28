@@ -97,7 +97,7 @@ export default function App() {
 
   return (
     <div
-      className="app-frame"
+      className={tab === 'home' && status === 'ready' && trip ? 'app-frame app-frame-home' : 'app-frame'}
       style={
         {
           '--theme-accent': activeTheme.accent,
