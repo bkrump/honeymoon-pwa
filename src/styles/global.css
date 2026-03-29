@@ -72,16 +72,16 @@ button {
   position: fixed;
   left: 0;
   right: 0;
-  bottom: calc(var(--tabbar-height) + var(--safe-bottom) - 1px);
-  height: clamp(4rem, 11vh, 5.75rem);
+  bottom: 0;
+  height: calc(var(--tabbar-height) + var(--safe-bottom) + clamp(4rem, 11vh, 5.75rem));
   z-index: 4;
   pointer-events: none;
   background: linear-gradient(
     180deg,
     rgba(250, 247, 241, 0) 0%,
-    rgba(250, 247, 241, 0.14) 36%,
-    rgba(250, 247, 241, 0.56) 74%,
-    rgba(250, 247, 241, 0.92) 100%
+    rgba(250, 247, 241, 0.16) 34%,
+    rgba(250, 247, 241, 0.7) 72%,
+    rgba(250, 247, 241, 0.96) 100%
   );
 }
 
@@ -683,9 +683,9 @@ button {
   margin-inline: auto;
   padding: 0.55rem 1.2rem calc(var(--safe-bottom) + 0.45rem);
   overflow: hidden;
-  background: linear-gradient(180deg, rgba(252, 249, 244, 0.9), rgba(250, 247, 241, 0.97) 38%, rgba(248, 244, 237, 0.995));
-  backdrop-filter: saturate(135%) blur(20px);
-  box-shadow: 0 -8px 26px rgba(16, 24, 36, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.58);
+  background: rgba(249, 245, 238, 0.96);
+  backdrop-filter: saturate(118%) blur(18px);
+  box-shadow: none;
 }
 
 .bottom-tabs::before {
