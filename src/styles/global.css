@@ -2,6 +2,7 @@
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --shell-max-width: 34rem;
+  --day-chip-width: 4.65rem;
   --surface-bg: rgba(249, 246, 239, 0.9);
   --surface-border: rgba(255, 255, 255, 0.42);
   --ink-900: #142236;
@@ -463,26 +464,49 @@ button {
 }
 
 .day-strip {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 5.2rem;
-  gap: 0.45rem;
+  display: flex;
+  gap: 0.5rem;
   width: 100%;
   min-width: 0;
   max-width: 100%;
   overflow-x: auto;
-  padding: 0.15rem 0;
-  padding-inline: 0.7rem;
+  padding: 0.15rem 0.15rem 0.2rem;
   scrollbar-width: none;
   overscroll-behavior-x: contain;
-  scroll-snap-type: x mandatory;
-  scroll-padding-inline: 0.7rem;
-  -webkit-mask-image: linear-gradient(90deg, transparent 0, black 0.55rem, black calc(100% - 0.55rem), transparent 100%);
-  mask-image: linear-gradient(90deg, transparent 0, black 0.55rem, black calc(100% - 0.55rem), transparent 100%);
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: 0.15rem;
 }
 
 .day-strip.compact {
   padding-top: 0.05rem;
+}
+
+.day-strip-shell {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.day-strip-shell::before,
+.day-strip-shell::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1.1rem;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.day-strip-shell::before {
+  left: 0;
+  background: linear-gradient(90deg, rgba(247, 244, 236, 0.92) 0%, rgba(247, 244, 236, 0) 100%);
+}
+
+.day-strip-shell::after {
+  right: 0;
+  background: linear-gradient(270deg, rgba(247, 244, 236, 0.92) 0%, rgba(247, 244, 236, 0) 100%);
 }
 
 .day-strip::-webkit-scrollbar {
@@ -491,16 +515,24 @@ button {
 
 .day-chip {
   border-radius: 1.2rem;
-  background: rgba(255, 255, 255, 0.62);
+  flex: 0 0 var(--day-chip-width);
+  width: var(--day-chip-width);
+  min-width: var(--day-chip-width);
+  max-width: var(--day-chip-width);
+  min-height: 5.15rem;
+  background: rgba(255, 255, 255, 0.78);
   border: 1px solid rgba(42, 73, 104, 0.1);
-  padding: 0.7rem 0.7rem;
+  padding: 0.72rem 0.55rem 0.78rem;
   display: grid;
-  gap: 0.12rem;
-  text-align: left;
+  align-content: center;
+  gap: 0.18rem;
+  justify-items: center;
+  text-align: center;
   color: var(--ink-700);
   box-shadow: 0 4px 12px rgba(18, 28, 44, 0.05);
+  backdrop-filter: blur(16px);
   scroll-snap-align: start;
-  min-width: 0;
+  scroll-snap-stop: always;
 }
 
 .day-chip span {
@@ -508,10 +540,13 @@ button {
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.14em;
+  white-space: nowrap;
 }
 
 .day-chip strong {
   font-size: 0.93rem;
+  line-height: 1.05;
+  white-space: nowrap;
 }
 
 .day-chip.active {
@@ -1000,16 +1035,13 @@ button {
   }
 
   .day-strip {
-    grid-auto-columns: 4.7rem;
+    --day-chip-width: 4.35rem;
     gap: 0.45rem;
-    padding-inline: 0.55rem;
-    scroll-padding-inline: 0.55rem;
-    -webkit-mask-image: linear-gradient(90deg, transparent 0, black 0.45rem, black calc(100% - 0.45rem), transparent 100%);
-    mask-image: linear-gradient(90deg, transparent 0, black 0.45rem, black calc(100% - 0.45rem), transparent 100%);
   }
 
   .day-chip {
-    padding: 0.66rem 0.64rem;
+    min-height: 4.85rem;
+    padding: 0.68rem 0.48rem 0.74rem;
   }
 
   .day-chip strong {
