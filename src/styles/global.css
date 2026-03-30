@@ -297,28 +297,6 @@ button {
   max-width: 16rem;
 }
 
-.preview-picker {
-  display: inline-flex;
-  align-self: flex-start;
-  flex-direction: column;
-  gap: 0.45rem;
-  padding: 0.8rem 0.95rem;
-  border-radius: 1rem;
-  background: rgba(255, 255, 255, 0.68);
-  border: 1px solid rgba(255, 255, 255, 0.66);
-  box-shadow: var(--shadow-card);
-  max-width: 100%;
-}
-
-.preview-picker span {
-  font-size: 0.74rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  color: var(--ink-700);
-}
-
-.preview-picker input,
 .auth-input {
   border: 1px solid rgba(50, 79, 110, 0.16);
   border-radius: 0.9rem;
