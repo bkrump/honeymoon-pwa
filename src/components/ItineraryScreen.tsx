@@ -241,27 +241,20 @@ function EventCard({ event }: { event: TripEvent }) {
 
 function revealChip(container: HTMLDivElement | null, button: HTMLButtonElement | null, behavior: ScrollBehavior = 'smooth') {
   if (!container || !button) return;
-  const gutter = 12;
-  const chipStart = button.offsetLeft - gutter;
-  const chipEnd = button.offsetLeft + button.offsetWidth + gutter;
+  const chipStart = button.offsetLeft;
+  const chipEnd = chipStart + button.offsetWidth;
   const viewStart = container.scrollLeft;
   const viewEnd = viewStart + container.clientWidth;
 
-  let left = viewStart;
+  if (chipStart >= viewStart && chipEnd <= viewEnd) return;
+
   if (chipStart < viewStart) {
-    left = chipStart;
-  } else if (chipEnd > viewEnd) {
-    left = chipEnd - container.clientWidth;
-  } else {
+    container.scrollTo({ left: Math.max(0, chipStart - 12), behavior });
     return;
   }
 
   const max = Math.max(0, container.scrollWidth - container.clientWidth);
-  left = Math.max(0, Math.min(max, left));
-
-  if (Math.abs(container.scrollLeft - left) < 2) return;
-
-  container.scrollTo({ left, behavior });
+  container.scrollTo({ left: Math.min(max, chipEnd - container.clientWidth + 12), behavior });
 }
 
 export function ItineraryScreen({ trip }: ItineraryScreenProps) {
@@ -306,26 +299,24 @@ export function ItineraryScreen({ trip }: ItineraryScreenProps) {
             {activeDay ? <p className="itinerary-active-date">{formatLongDate(activeDay.date)}</p> : null}
           </div>
         </div>
-        <div className="day-strip-shell">
-          <div ref={stripRef} className="day-strip compact" aria-label="Jump to trip day">
-            {trip.days.map((day, index) => {
-              const chip = formatDayChip(day.date);
-              return (
-                <button
-                  key={day.date}
-                  ref={(element) => {
-                    chipRefs.current[day.date] = element;
-                  }}
-                  className={activeDay?.date === day.date ? 'day-chip active compact' : 'day-chip compact'}
-                  onClick={() => jumpToDay(index)}
-                  type="button"
-                >
-                  <span>{chip.weekday}</span>
-                  <strong>{chip.monthDay}</strong>
-                </button>
-              );
-            })}
-          </div>
+        <div ref={stripRef} className="day-strip compact" aria-label="Jump to trip day">
+          {trip.days.map((day, index) => {
+            const chip = formatDayChip(day.date);
+            return (
+              <button
+                key={day.date}
+                ref={(element) => {
+                  chipRefs.current[day.date] = element;
+                }}
+                className={activeDay?.date === day.date ? 'day-chip active compact' : 'day-chip compact'}
+                onClick={() => jumpToDay(index)}
+                type="button"
+              >
+                <span>{chip.weekday}</span>
+                <strong>{chip.monthDay}</strong>
+              </button>
+            );
+          })}
         </div>
       </div>
 
