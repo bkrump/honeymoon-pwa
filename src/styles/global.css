@@ -517,27 +517,9 @@ button {
   box-shadow: 0 10px 22px color-mix(in srgb, var(--theme-accent) 18%, transparent);
 }
 
-.daybook-viewport {
-  position: relative;
-  min-height: 18rem;
-  overflow: hidden;
-  border-radius: calc(var(--radius-xl) + 0.15rem);
-  touch-action: pan-y;
-  transition: height 320ms ease;
-}
-
-.day-page {
-  position: absolute;
-  inset: 0;
+.day-page-single {
+  display: grid;
   min-width: 0;
-  opacity: 0;
-  pointer-events: none;
-  transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1), opacity 220ms ease;
-}
-
-.day-page.active {
-  opacity: 1;
-  pointer-events: auto;
 }
 
 .day-page-shell {
@@ -621,14 +603,10 @@ button {
   box-shadow: 0 18px 30px rgba(14, 23, 39, 0.12);
 }
 
-.event-card-toggle {
-  width: 100%;
-  background: transparent;
-  border: 0;
+.event-card-shell {
   padding: 1rem 1rem 0.95rem 1rem;
   display: grid;
   gap: 0.8rem;
-  text-align: left;
 }
 
 .event-card-topline,
@@ -710,14 +688,6 @@ button {
   letter-spacing: 0.02em;
 }
 
-.event-expand-affordance {
-  color: var(--ink-500);
-  font-size: 0.72rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-}
-
 .event-summary-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -750,24 +720,15 @@ button {
   overflow-wrap: anywhere;
 }
 
-.event-expand-shell {
-  display: grid;
-  grid-template-rows: 0fr;
-  opacity: 0;
-  transition: grid-template-rows 320ms ease, opacity 240ms ease;
-}
-
-.event-expand-shell.expanded {
-  grid-template-rows: 1fr;
-  opacity: 1;
-}
-
 .event-expanded-content {
   min-height: 0;
-  overflow: hidden;
   display: grid;
   gap: 0.9rem;
-  padding: 0 1rem 1rem 1rem;
+  padding-top: 0.1rem;
+}
+
+.event-expanded-content.always-open {
+  overflow: visible;
 }
 
 .event-actions {
@@ -1052,11 +1013,7 @@ button {
     font-size: 1.48rem;
   }
 
-  .daybook-viewport {
-    min-height: 16rem;
-  }
-
-  .event-card-toggle {
+  .event-card-shell {
     padding: 0.9rem 0.9rem 0.85rem;
   }
 

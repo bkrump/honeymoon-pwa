@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { TouchEvent } from 'react';
-import type { TripData, TripDay, TripEvent, TripEventType } from '../types/trip';
+import type { TripData, TripEvent, TripEventType } from '../types/trip';
 import { formatDayChip, formatLongDate } from '../lib/date';
 import { getInitialSelectedDate } from '../lib/trip';
 
@@ -118,17 +117,16 @@ function getMapQuery(event: TripEvent) {
   return event.address || event.location || null;
 }
 
-function EventCard({ event, expanded, onToggle }: { event: TripEvent; expanded: boolean; onToggle: () => void }) {
+function EventCard({ event }: { event: TripEvent }) {
   const summaryItems = buildSummaryItems(event);
   const headline = buildHeadline(event);
   const mapQuery = getMapQuery(event);
 
   return (
-    <article className={expanded ? `event-card event-${event.type} expanded` : `event-card event-${event.type}`}>
-      <button className="event-card-toggle" type="button" aria-expanded={expanded} onClick={onToggle}>
+    <article className={`event-card event-${event.type} expanded always-open`}>
+      <div className="event-card-shell">
         <div className="event-card-topline">
           <span className="event-time-badge">{event.timeLabel}</span>
-          <span className="event-expand-affordance">{expanded ? 'Hide details' : 'View details'}</span>
         </div>
         <div className="event-card-heading">
           <div className="event-title-block">
@@ -150,30 +148,28 @@ function EventCard({ event, expanded, onToggle }: { event: TripEvent; expanded: 
             ))}
           </dl>
         ) : null}
-      </button>
 
-      <div className={expanded ? 'event-expand-shell expanded' : 'event-expand-shell'}>
-        <div className="event-expanded-content">
-          {(event.confirmationCode || mapQuery) ? (
-            <div className="event-actions">
-              {event.confirmationCode ? (
-                <button className="event-action" type="button" onClick={() => copyValue(event.confirmationCode!)}>
-                  Copy code
-                </button>
-              ) : null}
-              {mapQuery ? (
-                <a
-                  className="event-action secondary"
-                  href={`https://maps.apple.com/?q=${encodeURIComponent(mapQuery)}`}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Open in Maps
-                </a>
-              ) : null}
-            </div>
-          ) : null}
+        {(event.confirmationCode || mapQuery) ? (
+          <div className="event-actions">
+            {event.confirmationCode ? (
+              <button className="event-action" type="button" onClick={() => copyValue(event.confirmationCode!)}>
+                Copy code
+              </button>
+            ) : null}
+            {mapQuery ? (
+              <a
+                className="event-action secondary"
+                href={`https://maps.apple.com/?q=${encodeURIComponent(mapQuery)}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Open in Maps
+              </a>
+            ) : null}
+          </div>
+        ) : null}
 
+        <div className="event-expanded-content always-open">
           <div className="event-meta-grid">
             {metaRows.map((row) => {
               const value = event[row.key];
@@ -269,14 +265,10 @@ export function ItineraryScreen({ trip }: ItineraryScreenProps) {
   );
 
   const [activeIndex, setActiveIndex] = useState(initialIndex);
-  const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
-  const [viewportHeight, setViewportHeight] = useState<number | null>(null);
 
   const headerRef = useRef<HTMLDivElement | null>(null);
   const stripRef = useRef<HTMLDivElement | null>(null);
   const chipRefs = useRef<Record<string, HTMLButtonElement | null>>({});
-  const pageRefs = useRef<Record<string, HTMLElement | null>>({});
-  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     setActiveIndex(initialIndex);
@@ -285,73 +277,16 @@ export function ItineraryScreen({ trip }: ItineraryScreenProps) {
   const activeDay = trip.days[activeIndex] ?? trip.days[0];
 
   useEffect(() => {
-    setExpandedEventId(null);
-  }, [activeDay?.date]);
-
-  useEffect(() => {
     if (!activeDay) return;
     revealChip(stripRef.current, chipRefs.current[activeDay.date], 'smooth');
   }, [activeDay]);
 
-  useEffect(() => {
-    if (!activeDay) return;
-    const activePage = pageRefs.current[activeDay.date];
-    if (!activePage) return;
-
-    const updateHeight = () => {
-      setViewportHeight(activePage.offsetHeight);
-    };
-
-    updateHeight();
-
-    if (typeof ResizeObserver === 'undefined') return;
-
-    const observer = new ResizeObserver(() => updateHeight());
-    observer.observe(activePage);
-    return () => observer.disconnect();
-  }, [activeDay, expandedEventId]);
-
-  function focusDaybookTop() {
+  function jumpToDay(index: number) {
+    setActiveIndex(index);
     const header = headerRef.current;
     if (!header) return;
     const top = header.getBoundingClientRect().top + window.scrollY - 12;
     window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
-  }
-
-  function navigateToIndex(nextIndex: number, options?: { scrollToTop?: boolean }) {
-    const clamped = Math.max(0, Math.min(trip.days.length - 1, nextIndex));
-    if (clamped === activeIndex) return;
-    setActiveIndex(clamped);
-    if (options?.scrollToTop !== false) {
-      focusDaybookTop();
-    }
-  }
-
-  function jumpToDay(index: number) {
-    navigateToIndex(index);
-  }
-
-  function handleTouchStart(event: TouchEvent<HTMLDivElement>) {
-    const touch = event.touches[0];
-    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
-  }
-
-  function handleTouchEnd(event: TouchEvent<HTMLDivElement>) {
-    const start = touchStartRef.current;
-    touchStartRef.current = null;
-    if (!start) return;
-
-    const touch = event.changedTouches[0];
-    const deltaX = touch.clientX - start.x;
-    const deltaY = touch.clientY - start.y;
-
-    if (Math.abs(deltaX) < 56 || Math.abs(deltaX) <= Math.abs(deltaY) * 1.15) return;
-
-    if (deltaX < 0) {
-      navigateToIndex(activeIndex + 1);
-    } else {
-      navigateToIndex(activeIndex - 1);
-    }
   }
 
   return (
@@ -385,58 +320,28 @@ export function ItineraryScreen({ trip }: ItineraryScreenProps) {
         </div>
       </div>
 
-      <div
-        className="daybook-viewport"
-        style={viewportHeight ? { height: `${viewportHeight}px` } : undefined}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-        onTouchCancel={() => {
-          touchStartRef.current = null;
-        }}
-      >
-        {trip.days.map((day, index) => {
-          const offset = index - activeIndex;
-          return (
-            <section
-              key={day.date}
-              ref={(element) => {
-                pageRefs.current[day.date] = element;
-              }}
-              className={index === activeIndex ? 'day-page active' : 'day-page'}
-              style={{ transform: `translateX(${offset * 100}%)` }}
-              aria-hidden={index !== activeIndex}
-            >
-              <div className="day-page-shell day-card">
-                <div className="day-card-header daybook-header">
-                  <div>
-                    <p className="day-label">{formatLongDate(day.date)}</p>
-                    <h3>{day.title}</h3>
-                    <p className="day-summary">{day.summary}</p>
-                  </div>
-                </div>
-                {day.events.length ? (
-                  <div className="event-stack daybook-events">
-                    {day.events.map((event) => (
-                      <EventCard
-                        key={event.id}
-                        event={event}
-                        expanded={expandedEventId === event.id}
-                        onToggle={() => {
-                          setExpandedEventId((current) => (current === event.id ? null : event.id));
-                        }}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="empty-state daybook-empty-state">
-                    <p>Nothing pinned here yet.</p>
-                  </div>
-                )}
-              </div>
-            </section>
-          );
-        })}
-      </div>
+      {activeDay ? (
+        <section className="day-page-single day-page-shell day-card">
+          <div className="day-card-header daybook-header">
+            <div>
+              <p className="day-label">{formatLongDate(activeDay.date)}</p>
+              <h3>{activeDay.title}</h3>
+              <p className="day-summary">{activeDay.summary}</p>
+            </div>
+          </div>
+          {activeDay.events.length ? (
+            <div className="event-stack daybook-events">
+              {activeDay.events.map((event) => (
+                <EventCard key={event.id} event={event} />
+              ))}
+            </div>
+          ) : (
+            <div className="empty-state daybook-empty-state">
+              <p>Nothing pinned here yet.</p>
+            </div>
+          )}
+        </section>
+      ) : null}
     </section>
   );
 }
