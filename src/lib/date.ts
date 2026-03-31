@@ -38,7 +38,7 @@ export function formatLongDate(isoDate: string): string {
 export function formatDayChip(isoDate: string): { weekday: string; monthDay: string } {
   const date = parseISODate(isoDate);
   return {
-    weekday: new Intl.DateTimeFormat(undefined, { weekday: 'short' }).format(date),
-    monthDay: new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' }).format(date)
+    weekday: new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(date),
+    monthDay: new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(date)
   };
 }
