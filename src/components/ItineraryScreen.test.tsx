@@ -105,4 +105,48 @@ describe('ItineraryScreen', () => {
       'https://www.google.com/maps/search/?api=1&query=NAMMOS%20Mykonos%2C%20Psarou%20Beach%2C%20Mykonos%2C%20Greece'
     );
   });
+
+  it('prefers an exact street address over a broader venue location', () => {
+    const trip: TripData = {
+      tripTitle: 'Test Trip',
+      tripDateRange: 'June 20, 2026',
+      timezone: 'America/Los_Angeles',
+      themeBands: [],
+      days: [
+        {
+          date: '2026-06-20',
+          title: 'Dinner Day',
+          summary: 'Dinner at m-eating',
+          events: [
+            {
+              id: 'm-eating:2026-06-20',
+              sourceEventId: 'm-eating',
+              type: 'activity',
+              title: 'Dinner at m-eating',
+              provider: 'm-eating',
+              location: 'M-eating Restaurant, Mykonos Town, Greece',
+              address: '10 Kalogera St, Mykonos Town, Greece',
+              timeLabel: '7:30 PM',
+              role: 'single',
+              details: ['Dinner reservation'],
+              layovers: [],
+              segments: [],
+              startDate: '2026-06-20',
+              endDate: '2026-06-20'
+            }
+          ]
+        }
+      ],
+      reservations: [],
+      essentials: [],
+      schemaVersion: 1
+    };
+
+    render(<ItineraryScreen trip={trip} />);
+
+    expect(screen.getByRole('link', { name: 'Open in Google Maps' })).toHaveAttribute(
+      'href',
+      'https://www.google.com/maps/search/?api=1&query=10%20Kalogera%20St%2C%20Mykonos%20Town%2C%20Greece'
+    );
+  });
 });

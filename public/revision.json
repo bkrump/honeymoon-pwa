@@ -1,8 +1,8 @@
 {
   "appVersion": "1.0.0",
   "schemaVersion": 1,
-  "contentVersion": "50b06b5c8a",
-  "buildTime": "2026-04-21T02:21:08.267Z",
-  "encryptedPath": "./data/trip.50b06b5c8a.enc.json",
-  "sourceFingerprint": "69626285601f5ad9f8085147598b0107504fddf722a820dff3fb57c9354fa19f"
+  "contentVersion": "4c87aebc47",
+  "buildTime": "2026-04-21T02:29:58.029Z",
+  "encryptedPath": "./data/trip.4c87aebc47.enc.json",
+  "sourceFingerprint": "854f56d71278ade3d21be020852623dc0e493aa88396801f99e2ae4b5dd720e4"
 }
