@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from 'react';
 import type { AppTab } from '../types/trip';
 
 interface BottomTabsProps {
@@ -25,8 +26,41 @@ function CalendarIcon() {
 }
 
 export function BottomTabs({ activeTab, onChange }: BottomTabsProps) {
+  const navRef = useRef<HTMLElement | null>(null);
+
+  useLayoutEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+
+    const rootStyle = document.documentElement.style;
+    const syncHeight = () => {
+      rootStyle.setProperty('--tabbar-height', `${Math.ceil(nav.getBoundingClientRect().height)}px`);
+    };
+
+    syncHeight();
+
+    window.addEventListener('resize', syncHeight);
+    window.visualViewport?.addEventListener('resize', syncHeight);
+
+    if (typeof ResizeObserver === 'undefined') {
+      return () => {
+        window.removeEventListener('resize', syncHeight);
+        window.visualViewport?.removeEventListener('resize', syncHeight);
+      };
+    }
+
+    const resizeObserver = new ResizeObserver(syncHeight);
+    resizeObserver.observe(nav);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', syncHeight);
+      window.visualViewport?.removeEventListener('resize', syncHeight);
+    };
+  }, []);
+
   return (
-    <nav className="bottom-tabs" aria-label="Primary">
+    <nav ref={navRef} className="bottom-tabs" aria-label="Primary">
       <button className={activeTab === 'home' ? 'tab-item active' : 'tab-item'} onClick={() => onChange('home')} aria-selected={activeTab === 'home'}>
         <HomeIcon />
         <span>Home</span>

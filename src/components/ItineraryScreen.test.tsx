@@ -149,4 +149,43 @@ describe('ItineraryScreen', () => {
       'https://www.google.com/maps/search/?api=1&query=10%20Kalogera%20St%2C%20Mykonos%20Town%2C%20Greece'
     );
   });
+
+  it('keeps flexible note cards concise when the headline already carries the key detail', () => {
+    const trip: TripData = {
+      tripTitle: 'Test Trip',
+      tripDateRange: 'June 19, 2026',
+      timezone: 'America/Los_Angeles',
+      themeBands: [],
+      days: [
+        {
+          date: '2026-06-19',
+          title: 'Open Day',
+          summary: 'Nothing scheduled until dinner',
+          events: [
+            {
+              id: 'open-day:2026-06-19',
+              sourceEventId: 'open-day',
+              type: 'note',
+              title: 'Open day',
+              timeLabel: 'Daytime',
+              role: 'single',
+              details: ['Nothing scheduled until dinner'],
+              layovers: [],
+              segments: [],
+              startDate: '2026-06-19',
+              endDate: '2026-06-19'
+            }
+          ]
+        }
+      ],
+      reservations: [],
+      essentials: [],
+      schemaVersion: 1
+    };
+
+    render(<ItineraryScreen trip={trip} />);
+
+    expect(screen.queryByText('Details')).not.toBeInTheDocument();
+    expect(screen.getAllByText('Nothing scheduled until dinner')).toHaveLength(2);
+  });
 });

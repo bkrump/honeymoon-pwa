@@ -14,7 +14,7 @@
   --radius-lg: 1.35rem;
   --radius-md: 1rem;
   --radius-sm: 0.85rem;
-  --tabbar-height: 76px;
+  --tabbar-height: 78px;
 }
 
 * {
@@ -156,7 +156,7 @@ button {
 }
 
 .active-screen {
-  min-height: calc(100vh - var(--safe-top) - var(--tabbar-height) - var(--safe-bottom) - 2rem);
+  min-height: calc(100dvh - var(--safe-top) - var(--tabbar-height) - var(--safe-bottom) - 2rem);
   min-width: 0;
   max-width: 100%;
 }
@@ -308,7 +308,7 @@ button {
 .auth-shell {
   position: relative;
   z-index: 2;
-  min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
   place-items: center;
   padding: calc(var(--safe-top) + 1.25rem) 1.25rem calc(var(--safe-bottom) + 1.25rem);
@@ -588,10 +588,28 @@ button {
   box-shadow: 0 18px 30px rgba(14, 23, 39, 0.12);
 }
 
+.event-note {
+  background: linear-gradient(180deg, rgba(251, 252, 253, 0.98), rgba(245, 248, 251, 0.92));
+}
+
+.event-note.expanded {
+  box-shadow: 0 14px 24px rgba(14, 23, 39, 0.08);
+}
+
+.event-quiet-note {
+  border-style: dashed;
+  border-color: rgba(100, 112, 131, 0.18);
+}
+
+.event-quiet-note::before {
+  width: 3px;
+  opacity: 0.72;
+}
+
 .event-card-shell {
-  padding: 1rem 1rem 0.95rem 1rem;
+  padding: 0.96rem 1rem 0.92rem 1rem;
   display: grid;
-  gap: 0.8rem;
+  gap: 0.72rem;
 }
 
 .event-card-topline,
@@ -624,8 +642,13 @@ button {
   overflow-wrap: anywhere;
 }
 
+.event-note h4 {
+  font-size: 1.34rem;
+  line-height: 1.08;
+}
+
 .event-headline {
-  margin: 0.45rem 0 0;
+  margin: 0.38rem 0 0;
   color: var(--ink-700);
   font-size: 0.98rem;
   line-height: 1.45;
@@ -680,6 +703,36 @@ button {
   margin: 0;
 }
 
+.event-detail-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.42rem;
+}
+
+.event-detail-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.7rem;
+  padding: 0.26rem 0.62rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--event-color) 12%, white 88%);
+  border: 1px solid color-mix(in srgb, var(--event-color) 18%, rgba(38, 61, 82, 0.08));
+  color: color-mix(in srgb, var(--event-color) 80%, #173d5c 20%);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.event-support-copy {
+  margin: 0;
+  padding: 0.82rem 0.9rem;
+  border-radius: 0.95rem;
+  background: rgba(244, 248, 251, 0.76);
+  border: 1px solid rgba(38, 61, 82, 0.07);
+  color: var(--ink-700);
+  line-height: 1.55;
+}
+
 .event-summary-item {
   padding: 0.7rem 0.78rem;
   border-radius: 1rem;
@@ -708,7 +761,7 @@ button {
 .event-expanded-content {
   min-height: 0;
   display: grid;
-  gap: 0.9rem;
+  gap: 0.82rem;
   padding-top: 0.1rem;
 }
 
@@ -720,7 +773,7 @@ button {
   display: flex;
   flex-wrap: wrap;
   gap: 0.6rem;
-  padding-top: 0.05rem;
+  padding-top: 0.04rem;
 }
 
 .event-action {
@@ -752,7 +805,7 @@ button {
 }
 
 .meta-block {
-  padding: 0.82rem 0.88rem;
+  padding: 0.78rem 0.84rem;
   border-radius: 1rem;
   background: rgba(245, 248, 250, 0.78);
   border: 1px solid rgba(38, 61, 82, 0.06);
@@ -773,7 +826,7 @@ button {
 .timeline-block,
 .list-block,
 .empty-state {
-  padding: 0.95rem;
+  padding: 0.9rem;
   border-radius: 1rem;
   background: rgba(244, 248, 251, 0.72);
   border: 1px dashed rgba(48, 71, 93, 0.14);
@@ -838,10 +891,15 @@ button {
   right: 0;
   bottom: 0;
   z-index: 5;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 0;
   width: min(100%, var(--shell-max-width));
   max-width: 100%;
   margin-inline: auto;
-  padding: 0.55rem 1.2rem calc(var(--safe-bottom) + 0.45rem);
+  min-height: calc(var(--tabbar-height) + var(--safe-bottom));
+  padding: 0.45rem 1.2rem calc(var(--safe-bottom) + 0.38rem);
   overflow: hidden;
   background: rgba(249, 245, 238, 0.96);
   backdrop-filter: saturate(118%) blur(18px);
@@ -854,18 +912,20 @@ button {
 
 .tab-item {
   appearance: none;
-  width: 50%;
+  flex: 1 1 0;
+  min-width: 0;
   border: 0;
   background: transparent;
   color: rgba(43, 69, 95, 0.55);
-  min-height: 3.1rem;
-  display: inline-flex;
+  min-height: 100%;
+  display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 0.18rem;
   font-size: 0.74rem;
   font-weight: 800;
+  line-height: 1;
   letter-spacing: 0.02em;
 }
 
@@ -1010,6 +1070,10 @@ button {
     font-size: 1.28rem;
   }
 
+  .event-note h4 {
+    font-size: 1.18rem;
+  }
+
   .event-card-topline {
     gap: 0.55rem;
   }
@@ -1042,7 +1106,7 @@ button {
   }
 
   .bottom-tabs {
-    padding: 0.45rem 1rem calc(var(--safe-bottom) + 0.38rem);
+    padding: 0.4rem 1rem calc(var(--safe-bottom) + 0.34rem);
   }
 
   .update-toast {

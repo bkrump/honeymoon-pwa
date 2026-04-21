@@ -13,6 +13,13 @@ type SummaryItem = {
   value: string;
 };
 
+type MetaItem = {
+  key: keyof TripEvent;
+  label: string;
+  value: string;
+  link?: boolean;
+};
+
 const typeLabels: Record<TripEventType, string> = {
   flight: 'Flight',
   car: 'Car',
@@ -35,6 +42,7 @@ const metaRows: Array<{ key: keyof TripEvent; label: string; link?: boolean }> =
 const urlPattern = /(https?:\/\/[^\s]+)/g;
 const googleMapsUrlPattern = /^https?:\/\/(?:www\.)?(?:google\.[^/\s]+\/maps|maps\.app\.goo\.gl|goo\.gl\/maps)\S*$/i;
 const genericLocationPattern = /^(hotel|hotel spa|hotel pool|hotel pickup)$/i;
+const compactDetailMaxLength = 28;
 
 function copyValue(value: string) {
   navigator.clipboard?.writeText(value).catch(() => undefined);
@@ -60,6 +68,31 @@ function renderLinkedText(value: string): ReactNode {
 function getAirportCode(value: string) {
   const match = value.match(/\(([A-Z0-9]{3,4})\)/);
   return match ? match[1] : value;
+}
+
+function normalizeComparableText(value: string) {
+  return value
+    .toLowerCase()
+    .replace(urlPattern, ' ')
+    .replace(/&/g, ' and ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+function isRedundantValue(value: string, references: Array<string | undefined>) {
+  const normalizedValue = normalizeComparableText(value);
+  if (!normalizedValue) return false;
+
+  return references.some((reference) => {
+    if (!reference) return false;
+
+    const normalizedReference = normalizeComparableText(reference);
+    if (!normalizedReference) return false;
+
+    return normalizedValue === normalizedReference ||
+      normalizedValue.includes(normalizedReference) ||
+      normalizedReference.includes(normalizedValue);
+  });
 }
 
 function getGoogleMapsHref(value: string): string {
@@ -104,53 +137,107 @@ function buildHeadline(event: TripEvent) {
     case 'transfer':
       return event.location || event.provider || event.details[0];
     case 'note':
-      return event.details[0] || event.location || event.provider;
+      return event.location || event.details[0] || event.provider;
     default:
       return undefined;
   }
 }
 
-function buildSummaryItems(event: TripEvent): SummaryItem[] {
-  switch (event.type) {
+function buildSummaryItems(event: TripEvent, headline?: string): SummaryItem[] {
+  const rawItems = (() => {
+    switch (event.type) {
     case 'flight':
       return [
         event.duration ? { label: 'Duration', value: event.duration } : null,
         event.cabin ? { label: 'Cabin', value: event.cabin } : null,
         event.layovers.length ? { label: 'Stops', value: event.layovers.join(' · ') } : null
-      ].filter(Boolean) as SummaryItem[];
+      ];
     case 'car':
       return [
-        event.provider ? { label: 'Provider', value: event.provider } : null,
         event.location ? { label: 'Pickup', value: event.location } : null,
         event.vehicle ? { label: 'Vehicle', value: event.vehicle } : null
-      ].filter(Boolean) as SummaryItem[];
+      ];
     case 'hotel':
       return [
-        event.provider ? { label: 'Hotel', value: event.provider } : null,
         event.location ? { label: 'Location', value: event.location } : null,
         event.duration ? { label: 'Stay', value: event.duration } : null
-      ].filter(Boolean) as SummaryItem[];
+      ];
     case 'activity':
       return [
         event.location ? { label: 'Where', value: event.location } : null,
-        event.provider ? { label: 'Host', value: event.provider } : null,
-        event.details[0] ? { label: 'Plan', value: event.details[0] } : null
-      ].filter(Boolean) as SummaryItem[];
+        event.provider ? { label: 'Host', value: event.provider } : null
+      ];
     case 'transfer':
       return [
         event.location ? { label: 'Route', value: event.location } : null,
-        event.provider ? { label: 'Provider', value: event.provider } : null,
-        event.details[0] ? { label: 'Note', value: event.details[0] } : null
-      ].filter(Boolean) as SummaryItem[];
+        event.provider ? { label: 'Provider', value: event.provider } : null
+      ];
     case 'note':
       return [
-        event.details[0] ? { label: 'Note', value: event.details[0] } : null,
         event.location ? { label: 'Where', value: event.location } : null,
         event.provider ? { label: 'Source', value: event.provider } : null
-      ].filter(Boolean) as SummaryItem[];
+      ];
     default:
       return [];
-  }
+    }
+  })();
+
+  return rawItems
+    .filter(Boolean)
+    .filter((item): item is SummaryItem => Boolean(item))
+    .filter((item) => !isRedundantValue(item.value, [event.title, headline]));
+}
+
+function buildMetaItems(event: TripEvent, headline: string | undefined, summaryItems: SummaryItem[]): MetaItem[] {
+  const references = [event.title, headline, ...summaryItems.map((item) => item.value)];
+
+  return metaRows.flatMap((row) => {
+    const value = event[row.key];
+    if (!value || typeof value !== 'string') return [];
+    if (isRedundantValue(value, references)) return [];
+
+    return [
+      {
+        key: row.key,
+        label: row.label,
+        value,
+        link: row.link
+      }
+    ];
+  });
+}
+
+function isCompactDetail(value: string) {
+  return !urlPattern.test(value) && value.length <= compactDetailMaxLength;
+}
+
+function buildDetailContent(event: TripEvent, headline: string | undefined, summaryItems: SummaryItem[], metaItems: MetaItem[]) {
+  const references = [
+    event.title,
+    headline,
+    ...summaryItems.map((item) => item.value),
+    ...metaItems.map((item) => item.value)
+  ];
+
+  const visibleDetails = event.details.filter((item) => !isRedundantValue(item, references));
+  const supportCopy =
+    event.type === 'note' &&
+    visibleDetails.length === 1 &&
+    !urlPattern.test(visibleDetails[0])
+      ? visibleDetails[0]
+      : null;
+
+  const detailCandidates = supportCopy ? [] : visibleDetails;
+  const detailPills =
+    detailCandidates.length <= 2
+      ? detailCandidates.filter((item) => isCompactDetail(item))
+      : [];
+
+  return {
+    supportCopy,
+    detailPills,
+    detailItems: detailCandidates.filter((item) => !detailPills.includes(item))
+  };
 }
 
 function getMapHref(event: TripEvent) {
@@ -165,12 +252,24 @@ function getMapHref(event: TripEvent) {
 }
 
 function EventCard({ event }: { event: TripEvent }) {
-  const summaryItems = buildSummaryItems(event);
   const headline = buildHeadline(event);
+  const summaryItems = buildSummaryItems(event, headline);
+  const metaItems = buildMetaItems(event, headline, summaryItems);
+  const { supportCopy, detailPills, detailItems } = buildDetailContent(event, headline, summaryItems, metaItems);
   const mapHref = getMapHref(event);
+  const hasExpandedContent = Boolean(metaItems.length || event.segments.length || event.layovers.length || detailItems.length);
+  const eventCardClassName = [
+    'event-card',
+    `event-${event.type}`,
+    'expanded',
+    'always-open',
+    event.type === 'note' && !hasExpandedContent && !summaryItems.length ? 'event-quiet-note' : ''
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   return (
-    <article className={`event-card event-${event.type} expanded always-open`}>
+    <article className={eventCardClassName}>
       <div className="event-card-shell">
         <div className="event-card-topline">
           <span className="event-time-badge">{event.timeLabel}</span>
@@ -196,6 +295,18 @@ function EventCard({ event }: { event: TripEvent }) {
           </dl>
         ) : null}
 
+        {detailPills.length ? (
+          <div className="event-detail-pills" aria-label="Highlights">
+            {detailPills.map((item) => (
+              <span key={`${event.id}-${item}`} className="event-detail-pill">
+                {item}
+              </span>
+            ))}
+          </div>
+        ) : null}
+
+        {supportCopy ? <p className="event-support-copy">{renderLinkedText(supportCopy)}</p> : null}
+
         {(event.confirmationCode || mapHref) ? (
           <div className="event-actions">
             {event.confirmationCode ? (
@@ -216,71 +327,71 @@ function EventCard({ event }: { event: TripEvent }) {
           </div>
         ) : null}
 
-        <div className="event-expanded-content always-open">
-          <div className="event-meta-grid">
-            {metaRows.map((row) => {
-              const value = event[row.key];
-              if (!value || typeof value !== 'string') return null;
-              return (
-                <div key={row.key} className="meta-block">
-                  <span>{row.label}</span>
-                  {row.link ? (
-                    <a href={getGoogleMapsHref(value)} target="_blank" rel="noreferrer">
-                      {value}
-                    </a>
-                  ) : (
-                    <strong>{value}</strong>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          {event.segments.length ? (
-            <div className="timeline-block">
-              <p className="list-label">Segments</p>
-              <div className="segment-list">
-                {event.segments.map((segment, index) => (
-                  <div className="segment-item" key={`${event.id}-segment-${index}`}>
-                    <div className="segment-route">
-                      <strong>{segment.from}</strong>
-                      <span />
-                      <strong>{segment.to}</strong>
-                    </div>
-                    <p>{segment.departureLabel}</p>
-                    <p>{segment.arrivalLabel}</p>
-                    <p>
-                      {segment.airline} · {segment.equipment} · {segment.cabin}
-                    </p>
-                    {segment.note ? <p>{segment.note}</p> : null}
+        {hasExpandedContent ? (
+          <div className="event-expanded-content always-open">
+            {metaItems.length ? (
+              <div className="event-meta-grid">
+                {metaItems.map((item) => (
+                  <div key={item.key} className="meta-block">
+                    <span>{item.label}</span>
+                    {item.link ? (
+                      <a href={getGoogleMapsHref(item.value)} target="_blank" rel="noreferrer">
+                        {item.value}
+                      </a>
+                    ) : (
+                      <strong>{item.value}</strong>
+                    )}
                   </div>
                 ))}
               </div>
-            </div>
-          ) : null}
+            ) : null}
 
-          {event.layovers.length ? (
-            <div className="list-block">
-              <p className="list-label">Layovers</p>
-              <ul>
-                {event.layovers.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
+            {event.segments.length ? (
+              <div className="timeline-block">
+                <p className="list-label">Segments</p>
+                <div className="segment-list">
+                  {event.segments.map((segment, index) => (
+                    <div className="segment-item" key={`${event.id}-segment-${index}`}>
+                      <div className="segment-route">
+                        <strong>{segment.from}</strong>
+                        <span />
+                        <strong>{segment.to}</strong>
+                      </div>
+                      <p>{segment.departureLabel}</p>
+                      <p>{segment.arrivalLabel}</p>
+                      <p>
+                        {segment.airline} · {segment.equipment} · {segment.cabin}
+                      </p>
+                      {segment.note ? <p>{segment.note}</p> : null}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
 
-          {event.details.length ? (
-            <div className="list-block">
-              <p className="list-label">Details</p>
-              <ul>
-                {event.details.map((item) => (
-                  <li key={item}>{renderLinkedText(item)}</li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-        </div>
+            {event.layovers.length ? (
+              <div className="list-block">
+                <p className="list-label">Layovers</p>
+                <ul>
+                  {event.layovers.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+
+            {detailItems.length ? (
+              <div className="list-block">
+                <p className="list-label">Details</p>
+                <ul>
+                  {detailItems.map((item) => (
+                    <li key={item}>{renderLinkedText(item)}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
       </div>
     </article>
   );
