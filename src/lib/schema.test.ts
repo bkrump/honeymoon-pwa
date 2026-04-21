@@ -21,4 +21,19 @@ describe('validateTripSource', () => {
 
     expect(() => validateTripSource(badSource)).toThrow(/Duplicate reservation reference/);
   });
+
+  it('rejects duplicate event ids', () => {
+    const badSource = {
+      ...sampleTripSource,
+      events: [
+        ...sampleTripSource.events,
+        {
+          ...sampleTripSource.events[0],
+          confirmationCode: 'ALT123'
+        }
+      ]
+    };
+
+    expect(() => validateTripSource(badSource)).toThrow(/Duplicate event id/);
+  });
 });

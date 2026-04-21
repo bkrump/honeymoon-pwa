@@ -14,6 +14,7 @@ export const revisionPath = path.join(repoRoot, 'public', 'revision.json');
 export const generatedDir = path.join(repoRoot, 'src', 'generated');
 export const generatedRevisionPath = path.join(generatedDir, 'tripRevision.ts');
 const REMEMBER_SALT = 'honeymoon-remember-v1';
+const BUILD_ARTIFACT_VERSION = 2;
 
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
@@ -152,6 +153,30 @@ function deriveEventRole(date, event) {
   return 'middle';
 }
 
+function parseTimeLabelMinutes(label) {
+  const match = label.match(/(\d{1,2}):(\d{2})\s*([AP]M)/i);
+  if (match) {
+    let hours = Number(match[1]) % 12;
+    if (match[3].toUpperCase() === 'PM') {
+      hours += 12;
+    }
+    return hours * 60 + Number(match[2]);
+  }
+
+  const normalized = label.toLowerCase();
+  if (normalized.includes('morning')) return 9 * 60;
+  if (normalized.includes('daytime')) return 10 * 60;
+  if (normalized.includes('lunch')) return 12 * 60;
+  if (normalized.includes('after')) return 13 * 60;
+  if (normalized.includes('afternoon')) return 14 * 60;
+  if (normalized.includes('travel day')) return 12 * 60;
+  if (normalized.includes('evening')) return 18 * 60;
+  if (normalized.includes('dinner')) return 19 * 60;
+  if (normalized.includes('night')) return 21 * 60;
+  if (normalized.includes('after trip')) return 23 * 60;
+  return 12 * 60;
+}
+
 function toDisplayEvent(event, date) {
   const role = deriveEventRole(date, event);
   return {
@@ -180,6 +205,7 @@ function toDisplayEvent(event, date) {
 export function validateTripSource(input) {
   const parsed = tripSourceSchema.parse(input);
   const knownDays = new Set(parsed.days.map((day) => day.date));
+  const seenEventIds = new Set();
 
   parsed.days.forEach((day, index) => {
     if (index === 0) return;
@@ -191,6 +217,11 @@ export function validateTripSource(input) {
 
   const seenReservations = new Set();
   parsed.events.forEach((event) => {
+    if (seenEventIds.has(event.id)) {
+      throw new Error(`Duplicate event id ${event.id} found in trip source.`);
+    }
+    seenEventIds.add(event.id);
+
     if (compareISO(event.startDate, event.endDate || event.startDate) > 0) {
       throw new Error(`Event ${event.id} has an endDate before its startDate.`);
     }
@@ -218,9 +249,14 @@ export function buildTripData(source) {
   const parsed = validateTripSource(source);
   const eventsByDay = new Map(parsed.days.map((day) => [day.date, []]));
 
-  parsed.events.forEach((event) => {
+  parsed.events.forEach((event, index) => {
     getDaySpan(event.startDate, event.endDate || event.startDate).forEach((date) => {
-      eventsByDay.get(date)?.push(toDisplayEvent(event, date));
+      const displayEvent = toDisplayEvent(event, date);
+      eventsByDay.get(date)?.push({
+        event: displayEvent,
+        order: index,
+        sortMinutes: parseTimeLabelMinutes(displayEvent.timeLabel)
+      });
     });
   });
 
@@ -228,11 +264,11 @@ export function buildTripData(source) {
     date: day.date,
     title: day.title,
     summary: day.summary,
-    events: (eventsByDay.get(day.date) || []).sort((a, b) => {
-      const aRole = a.role === 'start' || a.role === 'single' ? 0 : a.role === 'end' ? 2 : 1;
-      const bRole = b.role === 'start' || b.role === 'single' ? 0 : b.role === 'end' ? 2 : 1;
-      return aRole - bRole;
-    })
+    events: (eventsByDay.get(day.date) || [])
+      .sort((a, b) => {
+        return a.sortMinutes - b.sortMinutes || a.order - b.order;
+      })
+      .map((entry) => entry.event)
   }));
 
   return {
@@ -448,7 +484,7 @@ export function writeRevisionArtifacts(encryptedPayload, tripData, sourceFingerp
 
   for (const file of readdirSync(publicDataDir)) {
     if (/^trip\..*\.enc\.json$/.test(file)) {
-      rmSync(path.join(publicDataDir, file));
+      rmSync(path.join(publicDataDir, file), { force: true });
     }
   }
 
@@ -477,5 +513,7 @@ export function writeRevisionArtifacts(encryptedPayload, tripData, sourceFingerp
 }
 
 export function createSourceFingerprint(source) {
-  return createHash('sha256').update(JSON.stringify(source)).digest('hex');
+  return createHash('sha256')
+    .update(JSON.stringify({ buildArtifactVersion: BUILD_ARTIFACT_VERSION, source }))
+    .digest('hex');
 }

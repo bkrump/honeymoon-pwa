@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { TripData, TripEvent, TripEventType } from '../types/trip';
 import { formatDayChip, formatLongDate } from '../lib/date';
@@ -31,13 +32,52 @@ const metaRows: Array<{ key: keyof TripEvent; label: string; link?: boolean }> =
   { key: 'vehicle', label: 'Vehicle' }
 ];
 
+const urlPattern = /(https?:\/\/[^\s]+)/g;
+const googleMapsUrlPattern = /^https?:\/\/(?:www\.)?(?:google\.[^/\s]+\/maps|maps\.app\.goo\.gl|goo\.gl\/maps)\S*$/i;
+const genericLocationPattern = /^(hotel|hotel spa|hotel pool|hotel pickup)$/i;
+
 function copyValue(value: string) {
   navigator.clipboard?.writeText(value).catch(() => undefined);
+}
+
+function renderLinkedText(value: string): ReactNode {
+  const parts = value.split(urlPattern);
+  if (parts.length === 1) return value;
+
+  return parts.map((part, index) => {
+    if (!/^https?:\/\//.test(part)) {
+      return part;
+    }
+
+    return (
+      <a key={`${part}-${index}`} href={part} target="_blank" rel="noreferrer">
+        {part}
+      </a>
+    );
+  });
 }
 
 function getAirportCode(value: string) {
   const match = value.match(/\(([A-Z0-9]{3,4})\)/);
   return match ? match[1] : value;
+}
+
+function getGoogleMapsHref(value: string): string {
+  return googleMapsUrlPattern.test(value)
+    ? value
+    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(value)}`;
+}
+
+function findGoogleMapsLink(values: string[]): string | null {
+  for (const value of values) {
+    const matches = value.match(urlPattern) ?? [];
+    const googleMatch = matches.find((match) => googleMapsUrlPattern.test(match));
+    if (googleMatch) {
+      return googleMatch;
+    }
+  }
+
+  return null;
 }
 
 function buildRouteLabel(event: TripEvent) {
@@ -113,14 +153,21 @@ function buildSummaryItems(event: TripEvent): SummaryItem[] {
   }
 }
 
-function getMapQuery(event: TripEvent) {
-  return event.address || event.location || null;
+function getMapHref(event: TripEvent) {
+  const directMapsLink = findGoogleMapsLink(event.details);
+  if (directMapsLink) return directMapsLink;
+
+  if (event.address) return getGoogleMapsHref(event.address);
+  if (!event.location || event.type === 'flight' || event.location.includes('->') || genericLocationPattern.test(event.location)) {
+    return null;
+  }
+  return getGoogleMapsHref(event.location);
 }
 
 function EventCard({ event }: { event: TripEvent }) {
   const summaryItems = buildSummaryItems(event);
   const headline = buildHeadline(event);
-  const mapQuery = getMapQuery(event);
+  const mapHref = getMapHref(event);
 
   return (
     <article className={`event-card event-${event.type} expanded always-open`}>
@@ -143,27 +190,27 @@ function EventCard({ event }: { event: TripEvent }) {
             {summaryItems.map((item) => (
               <div key={`${event.id}-${item.label}`} className="event-summary-item">
                 <dt>{item.label}</dt>
-                <dd>{item.value}</dd>
+                <dd>{renderLinkedText(item.value)}</dd>
               </div>
             ))}
           </dl>
         ) : null}
 
-        {(event.confirmationCode || mapQuery) ? (
+        {(event.confirmationCode || mapHref) ? (
           <div className="event-actions">
             {event.confirmationCode ? (
               <button className="event-action" type="button" onClick={() => copyValue(event.confirmationCode!)}>
                 Copy code
               </button>
             ) : null}
-            {mapQuery ? (
+            {mapHref ? (
               <a
                 className="event-action secondary"
-                href={`https://maps.apple.com/?q=${encodeURIComponent(mapQuery)}`}
+                href={mapHref}
                 target="_blank"
                 rel="noreferrer"
               >
-                Open in Maps
+                Open in Google Maps
               </a>
             ) : null}
           </div>
@@ -178,7 +225,7 @@ function EventCard({ event }: { event: TripEvent }) {
                 <div key={row.key} className="meta-block">
                   <span>{row.label}</span>
                   {row.link ? (
-                    <a href={`https://maps.apple.com/?q=${encodeURIComponent(value)}`} target="_blank" rel="noreferrer">
+                    <a href={getGoogleMapsHref(value)} target="_blank" rel="noreferrer">
                       {value}
                     </a>
                   ) : (
@@ -228,7 +275,7 @@ function EventCard({ event }: { event: TripEvent }) {
               <p className="list-label">Details</p>
               <ul>
                 {event.details.map((item) => (
-                  <li key={item}>{item}</li>
+                  <li key={item}>{renderLinkedText(item)}</li>
                 ))}
               </ul>
             </div>
