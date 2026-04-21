@@ -33,8 +33,13 @@ export function BottomTabs({ activeTab, onChange }: BottomTabsProps) {
     if (!nav) return;
 
     const rootStyle = document.documentElement.style;
+    let lastHeight = '';
     const syncHeight = () => {
-      rootStyle.setProperty('--tabbar-height', `${Math.ceil(nav.getBoundingClientRect().height)}px`);
+      const nextHeight = `${Math.ceil(nav.offsetHeight)}px`;
+      if (nextHeight === lastHeight) return;
+
+      lastHeight = nextHeight;
+      rootStyle.setProperty('--tabbar-height', nextHeight);
     };
 
     syncHeight();

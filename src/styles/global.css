@@ -14,7 +14,7 @@
   --radius-lg: 1.35rem;
   --radius-md: 1rem;
   --radius-sm: 0.85rem;
-  --tabbar-height: 78px;
+  --tabbar-height: calc(78px + var(--safe-bottom));
 }
 
 * {
@@ -73,7 +73,7 @@ button {
   left: 0;
   right: 0;
   bottom: 0;
-  height: calc(var(--tabbar-height) + var(--safe-bottom) + clamp(4rem, 11vh, 5.75rem));
+  height: calc(var(--tabbar-height) + clamp(4rem, 11vh, 5.75rem));
   z-index: 4;
   pointer-events: none;
   background: linear-gradient(
@@ -142,7 +142,7 @@ button {
   width: min(100%, var(--shell-max-width));
   max-width: 100%;
   margin: 0 auto;
-  padding: 1rem 1.25rem calc(var(--tabbar-height) + var(--safe-bottom) + 1.25rem);
+  padding: 1rem 1.25rem calc(var(--tabbar-height) + 1.25rem);
 }
 
 .app-shell-home {
@@ -156,7 +156,7 @@ button {
 }
 
 .active-screen {
-  min-height: calc(100dvh - var(--safe-top) - var(--tabbar-height) - var(--safe-bottom) - 2rem);
+  min-height: calc(100dvh - var(--safe-top) - var(--tabbar-height) - 2rem);
   min-width: 0;
   max-width: 100%;
 }
@@ -212,7 +212,7 @@ button {
 
 .floating-copy {
   max-width: min(24rem, calc(100vw - 2.5rem));
-  padding: 0 0 calc(var(--tabbar-height) + var(--safe-bottom) + 1.55rem);
+  padding: 0 0 calc(var(--tabbar-height) + 1.55rem);
 }
 
 .hero-eyebrow,
@@ -898,7 +898,6 @@ button {
   width: min(100%, var(--shell-max-width));
   max-width: 100%;
   margin-inline: auto;
-  min-height: calc(var(--tabbar-height) + var(--safe-bottom));
   padding: 0.45rem 1.2rem calc(var(--safe-bottom) + 0.38rem);
   overflow: hidden;
   background: rgba(249, 245, 238, 0.96);
@@ -917,7 +916,7 @@ button {
   border: 0;
   background: transparent;
   color: rgba(43, 69, 95, 0.55);
-  min-height: 100%;
+  min-height: 3.15rem;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -942,7 +941,7 @@ button {
   position: fixed;
   left: 1rem;
   right: 1rem;
-  bottom: calc(var(--tabbar-height) + var(--safe-bottom) + 0.8rem);
+  bottom: calc(var(--tabbar-height) + 0.8rem);
   z-index: 6;
   width: auto;
   max-width: calc(var(--shell-max-width) - 2rem);
@@ -988,7 +987,7 @@ button {
   }
 
   .app-shell {
-    padding: 0.85rem 1rem calc(var(--tabbar-height) + var(--safe-bottom) + 1rem);
+    padding: 0.85rem 1rem calc(var(--tabbar-height) + 1rem);
   }
 
   .app-shell-home {
@@ -1005,7 +1004,7 @@ button {
 
   .floating-copy {
     max-width: calc(100vw - 2rem);
-    padding-bottom: calc(var(--tabbar-height) + var(--safe-bottom) + 1.25rem);
+    padding-bottom: calc(var(--tabbar-height) + 1.25rem);
   }
 
   .countdown-value {
@@ -1111,7 +1110,7 @@ button {
 
   .update-toast {
     width: calc(100% - 2rem);
-    bottom: calc(var(--tabbar-height) + var(--safe-bottom) + 0.5rem);
+    bottom: calc(var(--tabbar-height) + 0.5rem);
     padding: 0.8rem 0.9rem;
     flex-direction: column;
     align-items: stretch;
