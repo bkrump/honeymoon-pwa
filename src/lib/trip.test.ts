@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { getInitialSelectedDate } from './trip';
 import { buildTripData } from '../../scripts/shared-trip.mjs';
+import type { TripEvent } from '../types/trip';
 import { sampleTripSource } from '../test/fixtures';
 
 const trip = buildTripData(sampleTripSource);
@@ -47,7 +48,7 @@ describe('getInitialSelectedDate', () => {
       ]
     });
 
-    expect(orderedTrip.days[1].events.map((event) => event.title)).toEqual([
+    expect(orderedTrip.days[1].events.map((event: TripEvent) => event.title)).toEqual([
       'Marrakech to Seattle',
       'Seattle to Eugene'
     ]);
