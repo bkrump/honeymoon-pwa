@@ -37,13 +37,15 @@ body,
 }
 
 html {
-  min-height: 100dvh;
+  min-height: 100vh;
+  min-height: 100svh;
   background: var(--theme-page-tone, #eef1ef);
 }
 
 body {
   margin: 0;
-  min-height: 100dvh;
+  min-height: 100vh;
+  min-height: 100svh;
   font-family: 'Plus Jakarta Sans', 'Avenir Next', 'Helvetica Neue', sans-serif;
   color: var(--ink-900);
   background: var(--theme-page-tone, #eef1ef);
@@ -65,7 +67,8 @@ button {
 
 .app-frame {
   position: relative;
-  min-height: 100dvh;
+  min-height: 100vh;
+  min-height: 100svh;
   background: var(--theme-page-tone, #eef1ef);
   overflow-x: hidden;
 }
@@ -159,7 +162,7 @@ button {
 }
 
 .active-screen {
-  min-height: calc(100dvh - var(--safe-top) - var(--tabbar-total-height) - 2rem);
+  min-height: calc(100svh - var(--safe-top) - var(--tabbar-total-height) - 2rem);
   min-width: 0;
   max-width: 100%;
 }
@@ -184,13 +187,13 @@ button {
 }
 
 .home-screen.active-screen {
-  min-height: calc(100dvh - var(--safe-top) - 8rem);
+  min-height: calc(100svh - var(--safe-top) - 8rem);
 }
 
 .home-overlay {
   position: relative;
   width: 100%;
-  min-height: calc(100dvh - var(--safe-top) - 8rem);
+  min-height: calc(100svh - var(--safe-top) - 8rem);
   padding: 0;
   display: flex;
   flex-direction: column;
@@ -311,7 +314,8 @@ button {
 .auth-shell {
   position: relative;
   z-index: 2;
-  min-height: 100dvh;
+  min-height: 100vh;
+  min-height: 100svh;
   display: grid;
   place-items: center;
   padding: calc(var(--safe-top) + 1.25rem) 1.25rem calc(var(--safe-bottom) + 1.25rem);
@@ -993,9 +997,7 @@ button {
 
 .bottom-tabs {
   position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: auto 0 0 0;
   z-index: 5;
   display: flex;
   align-items: stretch;
@@ -1004,11 +1006,21 @@ button {
   width: min(100%, var(--shell-max-width));
   max-width: 100%;
   margin-inline: auto;
-  min-height: var(--tabbar-total-height);
+  height: var(--tabbar-total-height);
   padding: var(--tabbar-padding-top) 1.2rem calc(var(--safe-bottom) + var(--tabbar-padding-bottom));
   overflow: hidden;
   background: rgba(249, 245, 238, 0.96);
   backdrop-filter: saturate(118%) blur(18px);
+  -webkit-backdrop-filter: saturate(118%) blur(18px);
+  border-top: 1px solid rgba(42, 73, 104, 0.08);
+  contain: layout paint style;
+  isolation: isolate;
+  pointer-events: auto;
+  touch-action: manipulation;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  -webkit-transform: translate3d(0, 0, 0);
+  -webkit-backface-visibility: hidden;
   box-shadow: none;
 }
 
@@ -1020,10 +1032,13 @@ button {
   appearance: none;
   flex: 1 1 0;
   min-width: 0;
+  height: 100%;
   border: 0;
   background: transparent;
   color: rgba(43, 69, 95, 0.55);
-  min-height: var(--tabbar-content-height);
+  min-height: 0;
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1111,7 +1126,7 @@ button {
   }
 
   .home-overlay {
-    min-height: calc(100dvh - var(--safe-top) - 7.1rem);
+    min-height: calc(100svh - var(--safe-top) - 7.1rem);
   }
 
   .floating-copy {

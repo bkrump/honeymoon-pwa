@@ -28,6 +28,7 @@ export function BottomTabs({ activeTab, onChange }: BottomTabsProps) {
   return (
     <nav className="bottom-tabs" aria-label="Primary">
       <button
+        type="button"
         className={activeTab === 'home' ? 'tab-item active' : 'tab-item'}
         onClick={() => onChange('home')}
         aria-current={activeTab === 'home' ? 'page' : undefined}
@@ -36,6 +37,7 @@ export function BottomTabs({ activeTab, onChange }: BottomTabsProps) {
         <span>Home</span>
       </button>
       <button
+        type="button"
         className={activeTab === 'itinerary' ? 'tab-item active' : 'tab-item'}
         onClick={() => onChange('itinerary')}
         aria-current={activeTab === 'itinerary' ? 'page' : undefined}

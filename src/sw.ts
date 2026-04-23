@@ -6,6 +6,8 @@ import { CacheFirst, NetworkFirst, StaleWhileRevalidate } from 'workbox-strategi
 
 declare let self: ServiceWorkerGlobalScope & { __WB_MANIFEST: Array<unknown> };
 
+self.skipWaiting();
+
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
