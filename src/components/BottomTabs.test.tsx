@@ -1,40 +1,26 @@
-import { cleanup, render } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { BottomTabs } from './BottomTabs';
 
-type ResizeObserverCallback = ConstructorParameters<typeof ResizeObserver>[0];
-
-class ResizeObserverMock {
-  callback: ResizeObserverCallback;
-
-  constructor(callback: ResizeObserverCallback) {
-    this.callback = callback;
-  }
-
-  observe() {}
-
-  disconnect() {}
-}
-
 describe('BottomTabs', () => {
-  beforeEach(() => {
-    vi.stubGlobal('ResizeObserver', ResizeObserverMock);
-  });
-
   afterEach(() => {
     cleanup();
     document.documentElement.style.removeProperty('--tabbar-height');
-    vi.unstubAllGlobals();
+    document.documentElement.style.removeProperty('--tabbar-total-height');
     vi.restoreAllMocks();
   });
 
-  it('syncs the shared tabbar height variable from the rendered nav', () => {
-    vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(function (this: HTMLElement) {
-      return this.getAttribute('aria-label') === 'Primary' ? 92 : 0;
-    });
-
+  it('keeps tab sizing CSS-driven and does not mutate root height variables after render', () => {
     render(<BottomTabs activeTab="home" onChange={vi.fn()} />);
 
-    expect(document.documentElement.style.getPropertyValue('--tabbar-height')).toBe('92px');
+    expect(document.documentElement.style.getPropertyValue('--tabbar-height')).toBe('');
+    expect(document.documentElement.style.getPropertyValue('--tabbar-total-height')).toBe('');
+  });
+
+  it('marks the active tab as the current page without changing button semantics', () => {
+    render(<BottomTabs activeTab="itinerary" onChange={vi.fn()} />);
+
+    expect(screen.getByRole('button', { name: 'Itinerary' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('button', { name: 'Home' })).not.toHaveAttribute('aria-current');
   });
 });

@@ -42,6 +42,8 @@ const metaRows: Array<{ key: keyof TripEvent; label: string; link?: boolean }> =
 const urlPattern = /(https?:\/\/[^\s]+)/g;
 const googleMapsUrlPattern = /^https?:\/\/(?:www\.)?(?:google\.[^/\s]+\/maps|maps\.app\.goo\.gl|goo\.gl\/maps)\S*$/i;
 const genericLocationPattern = /^(hotel|hotel spa|hotel pool|hotel pickup)$/i;
+const freeTimeNotePattern = /(free time|open day|open dinner|nothing scheduled|unscheduled|rest of day|lunch|wander|pool|cabana|no dinner|no reservation|last day)/i;
+const genericDetailPattern = /^(dinner reservation|morning visit|museum visit|museum visit after jardin majorelle|no reservation|no dinner reservation|massage appointment at the hotel|pickup from the hotel|guided walking tour|boat day)$/i;
 const compactDetailMaxLength = 28;
 
 function copyValue(value: string) {
@@ -133,7 +135,7 @@ function buildHeadline(event: TripEvent) {
     case 'hotel':
       return event.location || event.provider;
     case 'activity':
-      return event.location || event.details[0];
+      return undefined;
     case 'transfer':
       return event.location || event.provider || event.details[0];
     case 'note':
@@ -164,8 +166,9 @@ function buildSummaryItems(event: TripEvent, headline?: string): SummaryItem[] {
       ];
     case 'activity':
       return [
-        event.location ? { label: 'Where', value: event.location } : null,
-        event.provider ? { label: 'Host', value: event.provider } : null
+        event.provider && !isRedundantValue(event.provider, [event.title, event.location])
+          ? { label: 'Host', value: event.provider }
+          : null
       ];
     case 'transfer':
       return [
@@ -194,6 +197,7 @@ function buildMetaItems(event: TripEvent, headline: string | undefined, summaryI
   return metaRows.flatMap((row) => {
     const value = event[row.key];
     if (!value || typeof value !== 'string') return [];
+    if (row.key === 'location' || row.key === 'address') return [];
     if (isRedundantValue(value, references)) return [];
 
     return [
@@ -208,7 +212,16 @@ function buildMetaItems(event: TripEvent, headline: string | undefined, summaryI
 }
 
 function isCompactDetail(value: string) {
-  return !urlPattern.test(value) && value.length <= compactDetailMaxLength;
+  return !value.match(urlPattern) && value.length <= compactDetailMaxLength;
+}
+
+function hasGoogleMapsLink(value: string) {
+  return (value.match(urlPattern) ?? []).some((match) => googleMapsUrlPattern.test(match));
+}
+
+function isGenericDetail(value: string) {
+  if (value.match(urlPattern)) return false;
+  return genericDetailPattern.test(value.trim());
 }
 
 function buildDetailContent(event: TripEvent, headline: string | undefined, summaryItems: SummaryItem[], metaItems: MetaItem[]) {
@@ -219,11 +232,11 @@ function buildDetailContent(event: TripEvent, headline: string | undefined, summ
     ...metaItems.map((item) => item.value)
   ];
 
-  const visibleDetails = event.details.filter((item) => !isRedundantValue(item, references));
+  const visibleDetails = event.details.filter((item) => !hasGoogleMapsLink(item) && !isGenericDetail(item) && !isRedundantValue(item, references));
   const supportCopy =
     event.type === 'note' &&
     visibleDetails.length === 1 &&
-    !urlPattern.test(visibleDetails[0])
+    !visibleDetails[0].match(urlPattern)
       ? visibleDetails[0]
       : null;
 
@@ -251,12 +264,89 @@ function getMapHref(event: TripEvent) {
   return getGoogleMapsHref(event.location);
 }
 
+function getLocationLabel(event: TripEvent, mapHref: string | null) {
+  if (event.type === 'flight') return null;
+
+  if (event.location && !genericLocationPattern.test(event.location)) {
+    return event.location;
+  }
+
+  if (event.address) return event.address;
+  if (mapHref) return 'Meeting point';
+  return null;
+}
+
+function shouldShowTypeChip(event: TripEvent) {
+  return event.type === 'flight' || event.type === 'car' || event.type === 'hotel' || event.type === 'transfer';
+}
+
+function isFreeTimeNote(event: TripEvent) {
+  if (event.type !== 'note' || event.confirmationCode || event.segments.length || event.layovers.length) {
+    return false;
+  }
+
+  return freeTimeNotePattern.test([event.title, event.timeLabel, event.location, ...event.details].filter(Boolean).join(' '));
+}
+
+function getFreeTimeCopy(event: TripEvent) {
+  return event.details.find((detail) => !isRedundantValue(detail, [event.title])) || event.location || event.title;
+}
+
+function isDuplicateFlightArrivalNote(event: TripEvent, events: TripEvent[]) {
+  if (event.type !== 'note' || !/^Land at .* Airport/i.test(event.title) || !event.confirmationCode) {
+    return false;
+  }
+
+  const airportCode = getAirportCode(event.title);
+  return events.some((candidate) => (
+    candidate.type === 'flight' &&
+    candidate.confirmationCode === event.confirmationCode &&
+    candidate.segments.some((segment) => segment.arrivalLabel.includes(airportCode))
+  ));
+}
+
+function getDisplayEvents(events: TripEvent[]) {
+  return events.filter((event) => !isDuplicateFlightArrivalNote(event, events));
+}
+
+function EventLocationRow({ label, mapHref }: { label: string; mapHref: string | null }) {
+  return (
+    <div className="event-location-row">
+      <span>{label}</span>
+      {mapHref ? (
+        <a href={mapHref} target="_blank" rel="noreferrer">
+          Map
+        </a>
+      ) : null}
+    </div>
+  );
+}
+
+function FreeTimeRow({ event }: { event: TripEvent }) {
+  const mapHref = getMapHref(event);
+  const locationLabel = getLocationLabel(event, mapHref);
+  const copy = getFreeTimeCopy(event);
+
+  return (
+    <article className="event-free-time">
+      <span className="free-time-time">{event.timeLabel}</span>
+      <div className="free-time-copy">
+        <strong>{event.title}</strong>
+        {copy !== event.title ? <span>{renderLinkedText(copy)}</span> : null}
+        {locationLabel ? <EventLocationRow label={locationLabel} mapHref={mapHref} /> : null}
+      </div>
+    </article>
+  );
+}
+
 function EventCard({ event }: { event: TripEvent }) {
   const headline = buildHeadline(event);
   const summaryItems = buildSummaryItems(event, headline);
   const metaItems = buildMetaItems(event, headline, summaryItems);
   const { supportCopy, detailPills, detailItems } = buildDetailContent(event, headline, summaryItems, metaItems);
   const mapHref = getMapHref(event);
+  const locationLabel = getLocationLabel(event, mapHref);
+  const showTypeChip = shouldShowTypeChip(event);
   const hasExpandedContent = Boolean(metaItems.length || event.segments.length || event.layovers.length || detailItems.length);
   const eventCardClassName = [
     'event-card',
@@ -276,14 +366,18 @@ function EventCard({ event }: { event: TripEvent }) {
         </div>
         <div className="event-card-heading">
           <div className="event-title-block">
-            <div className="event-badge-row">
-              <span className="event-chip">{typeLabels[event.type]}</span>
-              {event.confirmationCode ? <span className="event-code-badge">{event.confirmationCode}</span> : null}
-            </div>
+            {showTypeChip || event.confirmationCode ? (
+              <div className="event-badge-row">
+                {showTypeChip ? <span className="event-chip">{typeLabels[event.type]}</span> : null}
+                {event.confirmationCode ? <span className="event-code-badge">{event.confirmationCode}</span> : null}
+              </div>
+            ) : null}
+            {event.type === 'flight' && headline ? <p className="event-route-line">{headline}</p> : null}
             <h4>{event.title}</h4>
-            {headline ? <p className="event-headline">{headline}</p> : null}
+            {headline && event.type !== 'flight' ? <p className="event-headline">{headline}</p> : null}
           </div>
         </div>
+        {locationLabel ? <EventLocationRow label={locationLabel} mapHref={mapHref} /> : null}
         {summaryItems.length ? (
           <dl className="event-summary-grid">
             {summaryItems.map((item) => (
@@ -307,23 +401,11 @@ function EventCard({ event }: { event: TripEvent }) {
 
         {supportCopy ? <p className="event-support-copy">{renderLinkedText(supportCopy)}</p> : null}
 
-        {(event.confirmationCode || mapHref) ? (
+        {event.confirmationCode ? (
           <div className="event-actions">
-            {event.confirmationCode ? (
-              <button className="event-action" type="button" onClick={() => copyValue(event.confirmationCode!)}>
-                Copy code
-              </button>
-            ) : null}
-            {mapHref ? (
-              <a
-                className="event-action secondary"
-                href={mapHref}
-                target="_blank"
-                rel="noreferrer"
-              >
-                Open in Google Maps
-              </a>
-            ) : null}
+            <button className="event-action" type="button" onClick={() => copyValue(event.confirmationCode!)}>
+              Copy code
+            </button>
           </div>
         ) : null}
 
@@ -439,6 +521,8 @@ export function ItineraryScreen({ trip }: ItineraryScreenProps) {
     revealChip(stripRef.current, chipRefs.current[activeDay.date], 'smooth');
   }, [activeDay]);
 
+  const displayEvents = activeDay ? getDisplayEvents(activeDay.events) : [];
+
   function jumpToDay(index: number) {
     setActiveIndex(index);
     const header = headerRef.current;
@@ -451,7 +535,7 @@ export function ItineraryScreen({ trip }: ItineraryScreenProps) {
     <section className="itinerary-screen panel-shell active-screen">
       <div ref={headerRef} className="itinerary-sticky-shell">
         <div className="itinerary-header-card compact">
-          <p className="section-kicker">Reservations</p>
+          <p className="section-kicker">Trip days</p>
           <div className="itinerary-header-row">
             <h2>Itinerary</h2>
             {activeDay ? <p className="itinerary-active-date">{formatLongDate(activeDay.date)}</p> : null}
@@ -482,15 +566,14 @@ export function ItineraryScreen({ trip }: ItineraryScreenProps) {
         <section className="day-page-single day-page-shell day-card">
           <div className="day-card-header daybook-header">
             <div>
-              <p className="day-label">{formatLongDate(activeDay.date)}</p>
               <h3>{activeDay.title}</h3>
               <p className="day-summary">{activeDay.summary}</p>
             </div>
           </div>
-          {activeDay.events.length ? (
+          {displayEvents.length ? (
             <div className="event-stack daybook-events">
-              {activeDay.events.map((event) => (
-                <EventCard key={event.id} event={event} />
+              {displayEvents.map((event) => (
+                isFreeTimeNote(event) ? <FreeTimeRow key={event.id} event={event} /> : <EventCard key={event.id} event={event} />
               ))}
             </div>
           ) : (
