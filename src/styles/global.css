@@ -14,10 +14,9 @@
   --radius-lg: 1.35rem;
   --radius-md: 1rem;
   --radius-sm: 0.85rem;
-  --tabbar-content-height: 3.15rem;
-  --tabbar-padding-top: 0.45rem;
-  --tabbar-padding-bottom: 0.38rem;
-  --tabbar-total-height: calc(var(--tabbar-content-height) + var(--tabbar-padding-top) + var(--tabbar-padding-bottom) + var(--safe-bottom));
+  --tabbar-visual-height: 4.35rem;
+  --tabbar-reserve-gap: 0.72rem;
+  --tabbar-reserve-height: calc(var(--tabbar-visual-height) + var(--safe-bottom) + var(--tabbar-reserve-gap));
 }
 
 * {
@@ -79,7 +78,7 @@ button {
   left: 0;
   right: 0;
   bottom: 0;
-  height: calc(var(--tabbar-total-height) + clamp(4rem, 11vh, 5.75rem));
+  height: calc(var(--tabbar-reserve-height) + clamp(4rem, 11vh, 5.75rem));
   z-index: 4;
   pointer-events: none;
   background: linear-gradient(
@@ -148,7 +147,7 @@ button {
   width: min(100%, var(--shell-max-width));
   max-width: 100%;
   margin: 0 auto;
-  padding: 1rem 1.25rem calc(var(--tabbar-total-height) + 1.25rem);
+  padding: 1rem 1.25rem calc(var(--tabbar-reserve-height) + 1.25rem);
 }
 
 .app-shell-home {
@@ -162,7 +161,7 @@ button {
 }
 
 .active-screen {
-  min-height: calc(100svh - var(--safe-top) - var(--tabbar-total-height) - 2rem);
+  min-height: calc(100svh - var(--safe-top) - var(--tabbar-reserve-height) - 2rem);
   min-width: 0;
   max-width: 100%;
 }
@@ -218,7 +217,7 @@ button {
 
 .floating-copy {
   max-width: min(24rem, calc(100vw - 2.5rem));
-  padding: 0 0 calc(var(--tabbar-total-height) + 1.55rem);
+  padding: 0 0 calc(var(--tabbar-reserve-height) + 1.2rem);
 }
 
 .hero-eyebrow,
@@ -997,7 +996,7 @@ button {
 
 .bottom-tabs {
   position: fixed;
-  inset: auto 0 0 0;
+  inset: auto 0 var(--safe-bottom) 0;
   z-index: 5;
   display: flex;
   align-items: stretch;
@@ -1006,8 +1005,8 @@ button {
   width: min(100%, var(--shell-max-width));
   max-width: 100%;
   margin-inline: auto;
-  height: var(--tabbar-total-height);
-  padding: var(--tabbar-padding-top) 1.2rem calc(var(--safe-bottom) + var(--tabbar-padding-bottom));
+  height: var(--tabbar-visual-height);
+  padding: 0.48rem 1.2rem 0.58rem;
   overflow: hidden;
   background: rgba(249, 245, 238, 0.96);
   backdrop-filter: saturate(118%) blur(18px);
@@ -1059,11 +1058,32 @@ button {
   color: var(--theme-tab-tint);
 }
 
+.tab-item:focus {
+  outline: none;
+}
+
+.tab-item:focus-visible {
+  outline: none;
+}
+
+.tab-item:focus-visible::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0.18rem;
+  width: 1.35rem;
+  height: 3px;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.48;
+  transform: translateX(-50%);
+}
+
 .update-toast {
   position: fixed;
   left: 1rem;
   right: 1rem;
-  bottom: calc(var(--tabbar-total-height) + 0.8rem);
+  bottom: calc(var(--tabbar-reserve-height) + 0.55rem);
   z-index: 6;
   width: auto;
   max-width: calc(var(--shell-max-width) - 2rem);
@@ -1097,8 +1117,8 @@ button {
 
 @media (max-width: 640px) {
   :root {
-    --tabbar-padding-top: 0.4rem;
-    --tabbar-padding-bottom: 0.34rem;
+    --tabbar-visual-height: 4.25rem;
+    --tabbar-reserve-gap: 0.58rem;
   }
 
   .status-rail,
@@ -1114,7 +1134,7 @@ button {
   }
 
   .app-shell {
-    padding: 0.85rem 1rem calc(var(--tabbar-total-height) + 1rem);
+    padding: 0.85rem 1rem calc(var(--tabbar-reserve-height) + 0.9rem);
   }
 
   .app-shell-home {
@@ -1131,7 +1151,7 @@ button {
 
   .floating-copy {
     max-width: calc(100vw - 2rem);
-    padding-bottom: calc(var(--tabbar-total-height) + 1.25rem);
+    padding-bottom: calc(var(--tabbar-reserve-height) + 0.95rem);
   }
 
   .countdown-value {
@@ -1243,12 +1263,12 @@ button {
   }
 
   .bottom-tabs {
-    padding: var(--tabbar-padding-top) 1rem calc(var(--safe-bottom) + var(--tabbar-padding-bottom));
+    padding: 0.44rem 1rem 0.52rem;
   }
 
   .update-toast {
     width: calc(100% - 2rem);
-    bottom: calc(var(--tabbar-total-height) + 0.5rem);
+    bottom: calc(var(--tabbar-reserve-height) + 0.35rem);
     padding: 0.8rem 0.9rem;
     flex-direction: column;
     align-items: stretch;
