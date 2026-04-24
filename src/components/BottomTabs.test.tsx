@@ -9,6 +9,7 @@ describe('BottomTabs', () => {
     cleanup();
     document.documentElement.style.removeProperty('--tabbar-height');
     document.documentElement.style.removeProperty('--tabbar-total-height');
+    document.documentElement.style.removeProperty('--tabbar-safe-pad');
     document.documentElement.style.removeProperty('--tabbar-visual-height');
     document.documentElement.style.removeProperty('--tabbar-reserve-height');
     vi.restoreAllMocks();
@@ -19,6 +20,7 @@ describe('BottomTabs', () => {
 
     expect(document.documentElement.style.getPropertyValue('--tabbar-height')).toBe('');
     expect(document.documentElement.style.getPropertyValue('--tabbar-total-height')).toBe('');
+    expect(document.documentElement.style.getPropertyValue('--tabbar-safe-pad')).toBe('');
     expect(document.documentElement.style.getPropertyValue('--tabbar-visual-height')).toBe('');
     expect(document.documentElement.style.getPropertyValue('--tabbar-reserve-height')).toBe('');
   });
@@ -37,14 +39,16 @@ describe('BottomTabs', () => {
     const block = css.match(/\.bottom-tabs\s*{(?<body>[^}]+)}/)?.groups?.body ?? '';
     const paddingLine = block.match(/padding:\s*(?<value>[^;]+);/)?.groups?.value ?? '';
 
+    expect(css).toContain('--tabbar-safe-pad: clamp(0px, env(safe-area-inset-bottom, 0px), 1.05rem)');
     expect(css).toContain('--tabbar-visual-height:');
-    expect(css).toContain('--tabbar-reserve-height: calc(var(--tabbar-visual-height) + var(--safe-bottom)');
+    expect(css).toContain('--tabbar-reserve-height: calc(var(--tabbar-visual-height) + var(--tabbar-safe-pad)');
     expect(css).toContain('padding: 1rem 1.25rem calc(var(--tabbar-reserve-height) + 1.25rem)');
     expect(block).toContain('position: fixed');
-    expect(block).toContain('inset: auto 0 var(--safe-bottom) 0');
-    expect(block).toContain('height: var(--tabbar-visual-height)');
+    expect(block).toContain('inset: auto 0 0 0');
+    expect(block).toContain('height: calc(var(--tabbar-visual-height) + var(--tabbar-safe-pad))');
     expect(block).toContain('contain: layout paint style');
-    expect(paddingLine).not.toContain('safe-bottom');
+    expect(paddingLine).toContain('var(--tabbar-safe-pad)');
+    expect(block).not.toContain('var(--safe-bottom)');
     expect(block).not.toContain('height: var(--tabbar-total-height)');
     expect(block).not.toContain('min-height: var(--tabbar-total-height)');
   });
