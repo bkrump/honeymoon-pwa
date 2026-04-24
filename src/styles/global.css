@@ -1,4 +1,5 @@
 :root {
+  --app-height: 100dvh;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --shell-max-width: 34rem;
@@ -16,8 +17,9 @@
   --radius-sm: 0.85rem;
   --tabbar-safe-pad: clamp(0px, env(safe-area-inset-bottom, 0px), 1.05rem);
   --tabbar-visual-height: 4.35rem;
+  --tabbar-painted-height: calc(var(--tabbar-visual-height) + var(--tabbar-safe-pad));
   --tabbar-reserve-gap: 0.72rem;
-  --tabbar-reserve-height: calc(var(--tabbar-visual-height) + var(--tabbar-safe-pad) + var(--tabbar-reserve-gap));
+  --tabbar-reserve-height: calc(var(--tabbar-painted-height) + var(--tabbar-reserve-gap));
 }
 
 * {
@@ -38,14 +40,14 @@ body,
 
 html {
   min-height: 100vh;
-  min-height: 100dvh;
+  min-height: var(--app-height);
   background: var(--theme-page-tone, #eef1ef);
 }
 
 body {
   margin: 0;
   min-height: 100vh;
-  min-height: 100dvh;
+  min-height: var(--app-height);
   font-family: 'Plus Jakarta Sans', 'Avenir Next', 'Helvetica Neue', sans-serif;
   color: var(--ink-900);
   background: var(--theme-page-tone, #eef1ef);
@@ -68,7 +70,7 @@ button {
 .app-frame {
   position: relative;
   min-height: 100vh;
-  min-height: 100dvh;
+  min-height: var(--app-height);
   background: var(--theme-page-tone, #eef1ef);
   overflow-x: hidden;
 }
@@ -89,6 +91,11 @@ button {
     rgba(250, 247, 241, 0.7) 72%,
     rgba(250, 247, 241, 0.96) 100%
   );
+}
+
+.standalone-pwa .app-frame-home::after {
+  top: calc(var(--app-height) - (var(--tabbar-reserve-height) + clamp(4rem, 11vh, 5.75rem)));
+  bottom: auto;
 }
 
 .backdrop-scene {
@@ -162,7 +169,7 @@ button {
 }
 
 .active-screen {
-  min-height: calc(100dvh - var(--safe-top) - var(--tabbar-reserve-height) - 2rem);
+  min-height: calc(var(--app-height) - var(--safe-top) - var(--tabbar-reserve-height) - 2rem);
   min-width: 0;
   max-width: 100%;
 }
@@ -187,13 +194,13 @@ button {
 }
 
 .home-screen.active-screen {
-  min-height: calc(100dvh - var(--safe-top) - 8rem);
+  min-height: calc(var(--app-height) - var(--safe-top) - 8rem);
 }
 
 .home-overlay {
   position: relative;
   width: 100%;
-  min-height: calc(100dvh - var(--safe-top) - 8rem);
+  min-height: calc(var(--app-height) - var(--safe-top) - 8rem);
   padding: 0;
   display: flex;
   flex-direction: column;
@@ -315,7 +322,7 @@ button {
   position: relative;
   z-index: 2;
   min-height: 100vh;
-  min-height: 100dvh;
+  min-height: var(--app-height);
   display: grid;
   place-items: center;
   padding: calc(var(--safe-top) + 1.25rem) 1.25rem calc(var(--safe-bottom) + 1.25rem);
@@ -1006,7 +1013,7 @@ button {
   width: min(100%, var(--shell-max-width));
   max-width: 100%;
   margin-inline: auto;
-  height: calc(var(--tabbar-visual-height) + var(--tabbar-safe-pad));
+  height: var(--tabbar-painted-height);
   padding: 0.48rem 1.2rem calc(0.58rem + var(--tabbar-safe-pad));
   overflow: hidden;
   background: rgba(249, 245, 238, 0.96);
@@ -1022,6 +1029,11 @@ button {
   -webkit-transform: translate3d(0, 0, 0);
   -webkit-backface-visibility: hidden;
   box-shadow: none;
+}
+
+.standalone-pwa .bottom-tabs {
+  top: calc(var(--app-height) - var(--tabbar-painted-height));
+  bottom: auto;
 }
 
 .bottom-tabs::before {
@@ -1148,7 +1160,7 @@ button {
   }
 
   .home-overlay {
-    min-height: calc(100dvh - var(--safe-top) - 7.1rem);
+    min-height: calc(var(--app-height) - var(--safe-top) - 7.1rem);
   }
 
   .floating-copy {

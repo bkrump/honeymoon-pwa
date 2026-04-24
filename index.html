@@ -10,6 +10,48 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Honeymoon" />
     <link rel="apple-touch-icon" sizes="180x180" href="./assets/icons/apple-touch-icon.png" />
+    <script>
+      (function () {
+        function isStandalone() {
+          return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+        }
+
+        function syncViewportHeight() {
+          var visualHeight = window.visualViewport && window.visualViewport.height ? window.visualViewport.height : 0;
+          var viewportHeight = Math.max(window.innerHeight || 0, visualHeight);
+          var screenHeight = window.screen ? Math.max(window.screen.height || 0, window.screen.availHeight || 0) : 0;
+          var appHeight = isStandalone() ? Math.max(viewportHeight, screenHeight) : viewportHeight;
+
+          document.documentElement.classList.toggle('standalone-pwa', isStandalone());
+          document.documentElement.style.setProperty('--app-height', appHeight + 'px');
+        }
+
+        function scheduleViewportSync(delay) {
+          window.setTimeout(syncViewportHeight, delay);
+        }
+
+        syncViewportHeight();
+        window.requestAnimationFrame(function () {
+          syncViewportHeight();
+          window.requestAnimationFrame(syncViewportHeight);
+        });
+        [80, 240, 800].forEach(scheduleViewportSync);
+        window.addEventListener('resize', syncViewportHeight, { passive: true });
+        window.addEventListener('pageshow', syncViewportHeight, { passive: true });
+        window.addEventListener('load', function () {
+          syncViewportHeight();
+          scheduleViewportSync(250);
+        });
+        window.addEventListener('orientationchange', function () {
+          syncViewportHeight();
+          window.setTimeout(syncViewportHeight, 250);
+        });
+
+        if (window.visualViewport) {
+          window.visualViewport.addEventListener('resize', syncViewportHeight, { passive: true });
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
