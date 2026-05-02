@@ -48,6 +48,11 @@ async function main() {
   const sourceFingerprint = createSourceFingerprint(validated);
 
   if (!passphrase) {
+    if (process.env.CI && process.env.TRIP_SOURCE_BASE64 && hasExistingGeneratedBuild) {
+      console.log(`TRIP_PASSPHRASE is unavailable in CI. Using committed encrypted payload ${existingRevision.encryptedPath}`);
+      return;
+    }
+
     if (hasExistingGeneratedBuild && existingRevision.sourceFingerprint === sourceFingerprint) {
       console.log(`Trip source unchanged. Using existing encrypted payload ${existingRevision.encryptedPath}`);
       return;
