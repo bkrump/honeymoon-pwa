@@ -177,6 +177,9 @@ button {
 .hero-surface,
 .day-card,
 .itinerary-header-card,
+.game-hero-card,
+.game-card,
+.game-history-card,
 .auth-card,
 .update-toast {
   background: var(--theme-surface, rgba(249, 246, 239, 0.9));
@@ -245,6 +248,8 @@ button {
 
 .hero-title,
 .itinerary-header-card h2,
+.game-hero-card h2,
+.game-locked-state h3,
 .day-card h3,
 .auth-card h1,
 .event-card h4 {
@@ -291,6 +296,8 @@ button {
 .auth-copy,
 .section-subtitle,
 .day-summary,
+.game-hero-card p,
+.game-locked-state p,
 .empty-state p,
 .toast-copy {
   margin: 0.75rem 0 0;
@@ -1002,6 +1009,377 @@ button {
   background: rgba(252, 250, 245, 0.72);
 }
 
+.games-screen {
+  display: grid;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.game-hero-card,
+.game-card,
+.game-history-card {
+  border-radius: calc(var(--radius-xl) + 0.05rem);
+}
+
+.game-hero-card {
+  padding: 1.25rem 1.25rem 1.2rem;
+}
+
+.game-hero-card h2,
+.practice-header h3,
+.game-locked-state h3 {
+  color: var(--ink-900);
+}
+
+.game-hero-card h2 {
+  margin-top: 0.22rem;
+  font-size: clamp(2.05rem, 10vw, 3rem);
+}
+
+.game-card {
+  position: relative;
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+  overflow: hidden;
+}
+
+.game-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 12% 0%, color-mix(in srgb, var(--theme-accent) 22%, transparent) 0, transparent 30%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.42), transparent 45%);
+}
+
+.game-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.practice-card {
+  border-color: color-mix(in srgb, var(--theme-accent) 24%, rgba(255, 255, 255, 0.42));
+}
+
+.practice-card::before {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(255, 255, 255, 0.62) 0, transparent 28%),
+    radial-gradient(circle at 0% 18%, color-mix(in srgb, var(--theme-accent) 26%, transparent) 0, transparent 34%);
+}
+
+.practice-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 0.85rem;
+}
+
+.practice-header h3 {
+  margin: 0.14rem 0 0;
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: clamp(1.65rem, 8vw, 2.25rem);
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.practice-header button {
+  flex: 0 0 auto;
+  min-height: 2.2rem;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.42rem 0.72rem;
+  background: rgba(255, 255, 255, 0.72);
+  color: color-mix(in srgb, var(--theme-accent) 76%, #173d5c 24%);
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.practice-copy {
+  margin: -0.2rem 0 0;
+  color: var(--ink-700);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.practice-copy strong {
+  color: color-mix(in srgb, var(--theme-accent) 72%, #173d5c 28%);
+  letter-spacing: 0.08em;
+}
+
+.game-locked-state {
+  min-height: 18rem;
+  display: grid;
+  place-content: center;
+  justify-items: start;
+  padding: 1rem;
+}
+
+.game-locked-state span {
+  display: inline-flex;
+  min-height: 1.8rem;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.32rem 0.68rem;
+  background: color-mix(in srgb, var(--theme-accent) 13%, white 87%);
+  color: color-mix(in srgb, var(--theme-accent) 78%, #173d5c 22%);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.game-locked-state h3 {
+  margin-top: 0.7rem;
+  font-size: clamp(1.85rem, 9vw, 2.65rem);
+}
+
+.game-day-row,
+.history-heading,
+.history-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+}
+
+.game-day-row {
+  padding: 0.25rem 0.1rem 0;
+}
+
+.game-day-row div,
+.history-row div {
+  min-width: 0;
+}
+
+.game-day-row span,
+.history-row span {
+  display: block;
+  color: var(--ink-500);
+  font-size: 0.68rem;
+  font-weight: 850;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.game-day-row strong {
+  display: block;
+  margin-top: 0.16rem;
+  color: var(--ink-900);
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.game-day-row p,
+.history-row p {
+  margin: 0;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(42, 73, 104, 0.08);
+  color: var(--ink-700);
+  font-size: 0.74rem;
+  font-weight: 900;
+}
+
+.game-day-row p {
+  padding: 0.42rem 0.7rem;
+}
+
+.wordle-board {
+  display: grid;
+  gap: 0.45rem;
+  justify-items: center;
+  padding: 0.4rem 0 0.2rem;
+}
+
+.wordle-row {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 3.35rem));
+  gap: 0.45rem;
+  width: 100%;
+  justify-content: center;
+}
+
+.wordle-tile {
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 0.8rem;
+  background: rgba(255, 255, 255, 0.74);
+  border: 1px solid rgba(42, 73, 104, 0.1);
+  color: var(--ink-900);
+  font-size: clamp(1.15rem, 7vw, 1.65rem);
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: inset 0 -1px 0 rgba(20, 34, 54, 0.04);
+}
+
+.wordle-tile.filled {
+  border-color: color-mix(in srgb, var(--theme-accent) 28%, rgba(42, 73, 104, 0.1));
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.wordle-tile.correct,
+.key.correct {
+  background: #5f814e;
+  border-color: #5f814e;
+  color: white;
+}
+
+.wordle-tile.present,
+.key.present {
+  background: #b58a38;
+  border-color: #b58a38;
+  color: white;
+}
+
+.wordle-tile.absent,
+.key.absent {
+  background: #8a96a2;
+  border-color: #8a96a2;
+  color: white;
+}
+
+.wordle-entry {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.wordle-entry label {
+  color: var(--ink-500);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.wordle-entry div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.55rem;
+}
+
+.wordle-entry input {
+  min-width: 0;
+  min-height: 3rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(42, 73, 104, 0.12);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--ink-900);
+  font-size: 1.2rem;
+  font-weight: 900;
+  letter-spacing: 0.28em;
+  padding: 0.72rem 0.9rem;
+  text-transform: uppercase;
+}
+
+.wordle-entry button,
+.key {
+  border: 0;
+  font-weight: 900;
+}
+
+.wordle-entry button {
+  min-height: 3rem;
+  border-radius: 1rem;
+  padding: 0.72rem 0.95rem;
+  background: color-mix(in srgb, var(--theme-accent) 88%, #24415e 12%);
+  color: white;
+}
+
+.wordle-entry button:disabled,
+.key:disabled {
+  opacity: 0.58;
+}
+
+.wordle-keyboard {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.keyboard-row {
+  display: flex;
+  justify-content: center;
+  gap: 0.28rem;
+}
+
+.keyboard-row.actions {
+  margin-top: 0.15rem;
+}
+
+.key {
+  min-width: 0;
+  min-height: 2.35rem;
+  flex: 1 1 0;
+  max-width: 2.35rem;
+  border-radius: 0.72rem;
+  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid rgba(42, 73, 104, 0.08);
+  color: var(--ink-700);
+  font-size: 0.78rem;
+}
+
+.key.wide {
+  max-width: 6.2rem;
+  flex-basis: 5.6rem;
+}
+
+.game-message {
+  margin: -0.12rem 0 0;
+  border-radius: 1rem;
+  padding: 0.68rem 0.78rem;
+  background: color-mix(in srgb, var(--theme-accent) 10%, white 90%);
+  color: color-mix(in srgb, var(--theme-accent) 70%, #173d5c 30%);
+  font-size: 0.9rem;
+  font-weight: 850;
+  line-height: 1.4;
+}
+
+.game-history-card {
+  padding: 1rem;
+}
+
+.history-heading {
+  padding-bottom: 0.72rem;
+  border-bottom: 1px solid rgba(42, 73, 104, 0.08);
+}
+
+.history-heading span {
+  color: var(--ink-500);
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+.history-list {
+  display: grid;
+  gap: 0.48rem;
+  margin-top: 0.72rem;
+}
+
+.history-row {
+  padding: 0.6rem 0.68rem;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(42, 73, 104, 0.06);
+}
+
+.history-row strong {
+  display: block;
+  margin-top: 0.18rem;
+  color: var(--ink-900);
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+}
+
+.history-row p {
+  min-width: 4.35rem;
+  padding: 0.36rem 0.62rem;
+  text-align: center;
+}
+
 .bottom-tabs {
   position: fixed;
   inset: auto 0 0 0;
@@ -1265,6 +1643,57 @@ button {
 
   .event-action {
     width: 100%;
+  }
+
+  .game-hero-card,
+  .game-card,
+  .game-history-card {
+    border-radius: 1.55rem;
+  }
+
+  .game-hero-card,
+  .game-card,
+  .game-history-card {
+    padding: 0.95rem;
+  }
+
+  .game-hero-card h2 {
+    font-size: 2.2rem;
+  }
+
+  .practice-header {
+    align-items: start;
+  }
+
+  .practice-header h3 {
+    font-size: 1.86rem;
+  }
+
+  .game-day-row strong {
+    font-size: 1.22rem;
+  }
+
+  .wordle-row {
+    grid-template-columns: repeat(5, minmax(0, 2.9rem));
+    gap: 0.34rem;
+  }
+
+  .wordle-tile {
+    border-radius: 0.68rem;
+  }
+
+  .wordle-entry div {
+    grid-template-columns: 1fr;
+  }
+
+  .wordle-entry input {
+    text-align: center;
+  }
+
+  .key {
+    min-height: 2.18rem;
+    border-radius: 0.6rem;
+    font-size: 0.72rem;
   }
 
   .segment-route {

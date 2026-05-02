@@ -105,4 +105,4 @@ export interface V1EncryptedTripPayload {
 
 export type EncryptedTripPayload = V1EncryptedTripPayload | V2EncryptedTripPayload;
 
-export type AppTab = 'home' | 'itinerary';
+export type AppTab = 'home' | 'itinerary' | 'games';

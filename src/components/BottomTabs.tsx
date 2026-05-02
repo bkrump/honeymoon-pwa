@@ -24,6 +24,17 @@ function CalendarIcon() {
   );
 }
 
+function GamesIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.85" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="4" y="4" width="6" height="6" rx="1.3" />
+      <rect x="14" y="4" width="6" height="6" rx="1.3" />
+      <rect x="4" y="14" width="6" height="6" rx="1.3" />
+      <path d="M15 17h4M17 15v4" />
+    </svg>
+  );
+}
+
 export function BottomTabs({ activeTab, onChange }: BottomTabsProps) {
   return (
     <nav className="bottom-tabs" aria-label="Primary">
@@ -44,6 +55,15 @@ export function BottomTabs({ activeTab, onChange }: BottomTabsProps) {
       >
         <CalendarIcon />
         <span>Itinerary</span>
+      </button>
+      <button
+        type="button"
+        className={activeTab === 'games' ? 'tab-item active' : 'tab-item'}
+        onClick={() => onChange('games')}
+        aria-current={activeTab === 'games' ? 'page' : undefined}
+      >
+        <GamesIcon />
+        <span>Games</span>
       </button>
     </nav>
   );

@@ -2,6 +2,7 @@ import { CSSProperties, useEffect, useMemo, useState } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { AuthGate } from './components/AuthGate';
 import { BottomTabs } from './components/BottomTabs';
+import { GamesScreen } from './components/GamesScreen';
 import { HomeScreen } from './components/HomeScreen';
 import { ItineraryScreen } from './components/ItineraryScreen';
 import { UpdateToast } from './components/UpdateToast';
@@ -86,7 +87,12 @@ export default function App() {
     }
   }
 
-  const referenceDate = useMemo(() => new Date(), []);
+  const [referenceDate, setReferenceDate] = useState(() => new Date());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setReferenceDate(new Date()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
   const activeTheme = useMemo(() => {
     if (!trip) return themeVisuals.pretrip;
     const band = getThemeBandForDate(trip.themeBands, referenceDate);
@@ -119,11 +125,9 @@ export default function App() {
             </div>
           </header>
           <main className={tab === 'home' ? 'app-shell app-shell-home' : 'app-shell'}>
-            {tab === 'home' ? (
-              <HomeScreen trip={trip} referenceDate={referenceDate} />
-            ) : (
-              <ItineraryScreen trip={trip} referenceDate={referenceDate} />
-            )}
+            {tab === 'home' ? <HomeScreen trip={trip} referenceDate={referenceDate} /> : null}
+            {tab === 'itinerary' ? <ItineraryScreen trip={trip} referenceDate={referenceDate} /> : null}
+            {tab === 'games' ? <GamesScreen trip={trip} referenceDate={referenceDate} /> : null}
           </main>
           <BottomTabs activeTab={tab} onChange={setTab} />
           <UpdateToast

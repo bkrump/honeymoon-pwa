@@ -34,6 +34,16 @@ describe('BottomTabs', () => {
     expect(screen.getByRole('button', { name: 'Itinerary' })).toHaveAttribute('type', 'button');
     expect(screen.getByRole('button', { name: 'Home' })).not.toHaveAttribute('aria-current');
     expect(screen.getByRole('button', { name: 'Home' })).toHaveAttribute('type', 'button');
+    expect(screen.getByRole('button', { name: 'Games' })).not.toHaveAttribute('aria-current');
+    expect(screen.getByRole('button', { name: 'Games' })).toHaveAttribute('type', 'button');
+  });
+
+  it('can make Games the active tab', () => {
+    render(<BottomTabs activeTab="games" onChange={vi.fn()} />);
+
+    expect(screen.getByRole('button', { name: 'Games' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('button', { name: 'Home' })).not.toHaveAttribute('aria-current');
+    expect(screen.getByRole('button', { name: 'Itinerary' })).not.toHaveAttribute('aria-current');
   });
 
   it('keeps the painted tab shell compact and separates safe-area reserve from visual height', () => {
