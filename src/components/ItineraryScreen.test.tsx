@@ -32,6 +32,10 @@ function makeTrip(events: TripEvent[], summary = 'A focused test day'): TripData
   };
 }
 
+function renderItinerary(trip: TripData, referenceDate = new Date('2026-06-24T12:00:00')) {
+  return render(<ItineraryScreen trip={trip} referenceDate={referenceDate} />);
+}
+
 describe('ItineraryScreen', () => {
   it('uses compact map actions from event details and still linkifies booking URLs', () => {
     const trip = makeTrip([
@@ -54,7 +58,7 @@ describe('ItineraryScreen', () => {
       }
     ]);
 
-    render(<ItineraryScreen trip={trip} />);
+    renderItinerary(trip);
 
     const bookingLinks = screen.getAllByRole('link', {
       name: 'https://www.airbnb.com/experiences/1210804?viralityEntryPoint=2&s=76'
@@ -84,7 +88,7 @@ describe('ItineraryScreen', () => {
       }
     ]);
 
-    render(<ItineraryScreen trip={trip} />);
+    renderItinerary(trip);
 
     expect(screen.getByRole('link', { name: 'Map' })).toHaveAttribute(
       'href',
@@ -113,7 +117,7 @@ describe('ItineraryScreen', () => {
       }
     ]);
 
-    render(<ItineraryScreen trip={trip} />);
+    renderItinerary(trip);
 
     expect(screen.getByRole('link', { name: 'Map' })).toHaveAttribute(
       'href',
@@ -141,7 +145,7 @@ describe('ItineraryScreen', () => {
       'Nothing scheduled until dinner'
     );
 
-    render(<ItineraryScreen trip={trip} />);
+    renderItinerary(trip);
 
     expect(screen.getByText('Daytime')).toBeInTheDocument();
     expect(screen.getByText('Open day')).toBeInTheDocument();
@@ -197,9 +201,32 @@ describe('ItineraryScreen', () => {
       }
     ]);
 
-    render(<ItineraryScreen trip={trip} />);
+    renderItinerary(trip);
 
     expect(screen.getByText('Portland to Mykonos')).toBeInTheDocument();
     expect(screen.queryByText('Land at Mykonos Airport (JMK)')).not.toBeInTheDocument();
+  });
+
+  it('uses the provided QA reference date to autoselect the matching trip day', () => {
+    const trip = makeTrip([]);
+    trip.days = [
+      {
+        date: '2026-06-14',
+        title: 'Departure Day',
+        summary: 'Travel begins',
+        events: []
+      },
+      {
+        date: '2026-06-20',
+        title: 'Mykonos Dinner Day',
+        summary: 'Beach and dinner',
+        events: []
+      }
+    ];
+
+    renderItinerary(trip, new Date('2026-06-20T12:00:00'));
+
+    expect(screen.getByText('Mykonos Dinner Day')).toBeInTheDocument();
+    expect(screen.queryByText('Departure Day')).not.toBeInTheDocument();
   });
 });

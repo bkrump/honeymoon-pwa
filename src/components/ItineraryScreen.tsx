@@ -6,6 +6,7 @@ import { getInitialSelectedDate } from '../lib/trip';
 
 interface ItineraryScreenProps {
   trip: TripData;
+  referenceDate: Date;
 }
 
 type SummaryItem = {
@@ -497,8 +498,8 @@ function revealChip(container: HTMLDivElement | null, button: HTMLButtonElement 
   container.scrollTo({ left: Math.min(max, chipEnd - container.clientWidth + 12), behavior });
 }
 
-export function ItineraryScreen({ trip }: ItineraryScreenProps) {
-  const initialDate = useMemo(() => getInitialSelectedDate(trip.days), [trip.days]);
+export function ItineraryScreen({ trip, referenceDate }: ItineraryScreenProps) {
+  const initialDate = useMemo(() => getInitialSelectedDate(trip.days, referenceDate), [referenceDate, trip.days]);
   const initialIndex = useMemo(
     () => Math.max(0, trip.days.findIndex((day) => day.date === initialDate)),
     [initialDate, trip.days]

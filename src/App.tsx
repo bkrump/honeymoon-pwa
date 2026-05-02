@@ -7,7 +7,8 @@ import { ItineraryScreen } from './components/ItineraryScreen';
 import { UpdateToast } from './components/UpdateToast';
 import { decryptTripWithPassphrase, decryptTripWithRememberedKey, loadEncryptedPayload } from './lib/crypto';
 import { clearRememberedKey, loadRememberedKey, saveRememberedKey } from './lib/storage';
-import { buildHomeDisplay, getThemeBandForDate, themeVisuals } from './lib/theme';
+import { parseISODate, toISODate } from './lib/date';
+import { getThemeBandForDate, themeVisuals } from './lib/theme';
 import { tripRevision } from './generated/tripRevision';
 import type { AppTab, EncryptedTripPayload, TripData } from './types/trip';
 
@@ -21,6 +22,7 @@ export default function App() {
   const [payload, setPayload] = useState<EncryptedTripPayload | null>(null);
   const [status, setStatus] = useState<'booting' | 'locked' | 'unlocking' | 'ready' | 'error'>('booting');
   const [message, setMessage] = useState('Preparing the offline guide…');
+  const [qaDateISO, setQaDateISO] = useState(() => toISODate(new Date()));
   const {
     needRefresh: [needRefresh],
     updateServiceWorker
@@ -86,14 +88,12 @@ export default function App() {
     }
   }
 
-  const referenceDate = useMemo(() => new Date(), []);
+  const referenceDate = useMemo(() => parseISODate(qaDateISO), [qaDateISO]);
   const activeTheme = useMemo(() => {
     if (!trip) return themeVisuals.pretrip;
     const band = getThemeBandForDate(trip.themeBands, referenceDate);
     return themeVisuals[band.assetKey];
   }, [trip, referenceDate]);
-
-  const homeDisplay = useMemo(() => (trip ? buildHomeDisplay(trip, referenceDate) : null), [trip, referenceDate]);
 
   return (
     <div
@@ -122,9 +122,14 @@ export default function App() {
           </header>
           <main className={tab === 'home' ? 'app-shell app-shell-home' : 'app-shell'}>
             {tab === 'home' ? (
-              <HomeScreen trip={trip} referenceDate={referenceDate} />
+              <HomeScreen
+                trip={trip}
+                referenceDate={referenceDate}
+                referenceDateISO={qaDateISO}
+                onReferenceDateChange={setQaDateISO}
+              />
             ) : (
-              <ItineraryScreen trip={trip} />
+              <ItineraryScreen trip={trip} referenceDate={referenceDate} />
             )}
           </main>
           <BottomTabs activeTab={tab} onChange={setTab} />
