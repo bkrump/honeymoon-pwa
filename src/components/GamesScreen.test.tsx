@@ -17,21 +17,10 @@ describe('GamesScreen', () => {
     render(<GamesScreen trip={trip} referenceDate={new Date(2026, 5, 10, 12)} />);
 
     expect(screen.getByText(/Games unlock/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Submit Practice guess' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Submit Daily guess' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
     expect(screen.queryByText('VALET')).not.toBeInTheDocument();
     expect(screen.getAllByText('Hidden')).toHaveLength(trip.days.length);
-  });
-
-  it('lets the practice round play immediately without saving to trip history', () => {
-    render(<GamesScreen trip={trip} referenceDate={new Date(2026, 5, 10, 12)} />);
-
-    fireEvent.change(screen.getByLabelText('Practice guess'), { target: { value: 'clove' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Submit Practice guess' }));
-
-    expect(screen.getByRole('status')).toHaveTextContent('Solved in 1 guess.');
-    expect(screen.getByText('CLOVE')).toBeInTheDocument();
-    expect(window.localStorage.getItem(storageKey)).toBeNull();
   });
 
   it('stores a solved result and reveals the completed word in history', () => {

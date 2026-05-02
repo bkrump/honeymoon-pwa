@@ -5,7 +5,6 @@ import { formatLongDate, toISODate } from '../lib/date';
 const WORD_LENGTH = 5;
 const MAX_GUESSES = 6;
 const STORAGE_KEY = 'honeymoon-wordle-history-v1';
-const PRACTICE_WORD = 'CLOVE';
 
 const dailyWords: Record<string, string> = {
   '2026-06-14': 'VALET',
@@ -287,14 +286,9 @@ export function GamesScreen({ trip, referenceDate }: GamesScreenProps) {
   const [storedGames, setStoredGames] = useState<StoredGames>(() => loadStoredGames());
   const [currentGuess, setCurrentGuess] = useState('');
   const [message, setMessage] = useState('');
-  const [practiceGame, setPracticeGame] = useState<StoredGame>(() => createEmptyGame());
-  const [practiceGuess, setPracticeGuess] = useState('');
-  const [practiceMessage, setPracticeMessage] = useState('');
   const currentGame = storedGames[todayISO] ?? createEmptyGame();
   const isComplete = currentGame.status === 'won' || currentGame.status === 'lost';
-  const isPracticeComplete = practiceGame.status === 'won' || practiceGame.status === 'lost';
   const keyboardState = useMemo(() => buildKeyboardState(currentGame.guesses, answer), [answer, currentGame.guesses]);
-  const practiceKeyboardState = useMemo(() => buildKeyboardState(practiceGame.guesses, PRACTICE_WORD), [practiceGame.guesses]);
 
   useEffect(() => {
     setCurrentGuess('');
@@ -318,23 +312,6 @@ export function GamesScreen({ trip, referenceDate }: GamesScreenProps) {
     setMessage(result.message);
   }
 
-  function submitPracticeGuess() {
-    if (isPracticeComplete) return;
-
-    const result = resolveGuess(practiceGame, practiceGuess, PRACTICE_WORD);
-    if (result.accepted) {
-      setPracticeGame(result.game);
-      setPracticeGuess('');
-    }
-    setPracticeMessage(result.message);
-  }
-
-  function resetPracticeGame() {
-    setPracticeGame(createEmptyGame());
-    setPracticeGuess('');
-    setPracticeMessage('');
-  }
-
   function pressKey(key: string) {
     if (!isPlayableDay || isComplete) return;
 
@@ -349,22 +326,6 @@ export function GamesScreen({ trip, referenceDate }: GamesScreenProps) {
     }
 
     setCurrentGuess((value) => normalizeGuess(`${value}${key}`));
-  }
-
-  function pressPracticeKey(key: string) {
-    if (isPracticeComplete) return;
-
-    if (key === 'ENTER') {
-      submitPracticeGuess();
-      return;
-    }
-
-    if (key === 'BACKSPACE') {
-      setPracticeGuess((value) => value.slice(0, -1));
-      return;
-    }
-
-    setPracticeGuess((value) => normalizeGuess(`${value}${key}`));
   }
 
   useEffect(() => {
@@ -395,7 +356,6 @@ export function GamesScreen({ trip, referenceDate }: GamesScreenProps) {
   });
 
   const rows = buildRows(currentGame, currentGuess, answer);
-  const practiceRows = buildRows(practiceGame, practiceGuess, PRACTICE_WORD);
 
   return (
     <section className="games-screen panel-shell active-screen">
@@ -405,37 +365,6 @@ export function GamesScreen({ trip, referenceDate }: GamesScreenProps) {
         <p>
           A fresh five-letter word unlocks each trip day. Results stay on this device so you can keep a tiny victory log together.
         </p>
-      </div>
-
-      <div className="game-card practice-card">
-        <div className="practice-header">
-          <div>
-            <p className="section-kicker">Test experience</p>
-            <h3>Practice round</h3>
-          </div>
-          <button type="button" onClick={resetPracticeGame}>
-            Reset
-          </button>
-        </div>
-        <p className="practice-copy">
-          Play this anytime to test the board without saving to trip history. QA hint: try <strong>{PRACTICE_WORD}</strong> when you want to see the win state.
-        </p>
-        <WordleBoard label="Practice Wordle guesses" rows={practiceRows} />
-        <WordleEntry
-          id="practice-wordle-guess"
-          label="Practice guess"
-          value={practiceGuess}
-          disabled={isPracticeComplete}
-          onChange={setPracticeGuess}
-          onSubmit={submitPracticeGuess}
-        />
-        <WordleKeyboard
-          label="Practice keyboard"
-          keyboardState={practiceKeyboardState}
-          disabled={isPracticeComplete}
-          onPress={pressPracticeKey}
-        />
-        {practiceMessage ? <p className="game-message" role="status">{practiceMessage}</p> : null}
       </div>
 
       <div className="game-card">
@@ -458,7 +387,7 @@ export function GamesScreen({ trip, referenceDate }: GamesScreenProps) {
                 <span>{todayDay ? formatLongDate(todayDay.date) : 'Today'}</span>
                 <strong>{todayDay?.title ?? 'Trip Wordle'}</strong>
               </div>
-                <p>{isComplete ? currentGame.status === 'won' ? `${currentGame.guesses.length}/${MAX_GUESSES}` : `X/${MAX_GUESSES}` : `${currentGame.guesses.length}/${MAX_GUESSES} guesses`}</p>
+              <p>{isComplete ? currentGame.status === 'won' ? `${currentGame.guesses.length}/${MAX_GUESSES}` : `X/${MAX_GUESSES}` : `${currentGame.guesses.length}/${MAX_GUESSES} guesses`}</p>
             </div>
 
             <WordleBoard label="Daily Wordle guesses" rows={rows} />
