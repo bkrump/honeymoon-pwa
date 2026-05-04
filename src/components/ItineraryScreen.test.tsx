@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { ItineraryScreen } from './ItineraryScreen';
@@ -176,7 +178,6 @@ describe('ItineraryScreen', () => {
             to: 'Mykonos (JMK)',
             departureLabel: '14:50 Munich (MUC)',
             arrivalLabel: '18:20 Mykonos (JMK)',
-            equipment: 'Airbus A320',
             airline: 'Discover Airlines',
             cabin: 'Business'
           }
@@ -207,6 +208,60 @@ describe('ItineraryScreen', () => {
     expect(screen.queryByText('Land at Mykonos Airport (JMK)')).not.toBeInTheDocument();
   });
 
+  it('prioritizes flight start, end, and duration without showing aircraft types', () => {
+    const trip = makeTrip([
+      {
+        id: 'flight-mxp-rak:2026-06-21',
+        sourceEventId: 'flight-mxp-rak',
+        type: 'flight',
+        title: 'Mykonos to Marrakech',
+        provider: 'easyJet',
+        confirmationCode: 'CBCXV5FG',
+        timeLabel: 'Departs 10:30 AM (JMK)',
+        role: 'single',
+        location: 'JMK -> MXP -> RAK',
+        duration: '12h 25m',
+        details: [],
+        layovers: ['Milan Malpensa (MXP): 6h 15m self-transfer'],
+        segments: [
+          {
+            from: 'Mykonos (JMK)',
+            to: 'Milan (MXP)',
+            departureLabel: 'Sun Jun 21, 10:30 AM Mykonos (JMK)',
+            arrivalLabel: 'Sun Jun 21, 12:15 PM Milan (MXP)',
+            duration: '2h 45m',
+            airline: 'easyJet U23664',
+            cabin: 'Seats 12A / 12B'
+          },
+          {
+            from: 'Milan (MXP)',
+            to: 'Marrakesh (RAK)',
+            departureLabel: 'Sun Jun 21, 6:30 PM Milan (MXP)',
+            arrivalLabel: 'Sun Jun 21, 8:55 PM Marrakesh (RAK)',
+            duration: '3h 25m',
+            airline: 'easyJet U23929',
+            cabin: 'Seats 1B / 1C'
+          }
+        ],
+        startDate: '2026-06-21',
+        endDate: '2026-06-21'
+      }
+    ]);
+
+    renderItinerary(trip);
+
+    expect(screen.getByText('Start')).toBeInTheDocument();
+    expect(screen.getAllByText('Sun Jun 21, 10:30 AM Mykonos (JMK)')).toHaveLength(2);
+    expect(screen.getByText('End')).toBeInTheDocument();
+    expect(screen.getAllByText('Sun Jun 21, 8:55 PM Marrakesh (RAK)')).toHaveLength(2);
+    expect(screen.getAllByText('Duration')).toHaveLength(3);
+    expect(screen.getByText('12h 25m')).toBeInTheDocument();
+    expect(screen.getByText('2h 45m')).toBeInTheDocument();
+    expect(screen.getByText('3h 25m')).toBeInTheDocument();
+    expect(screen.getByText('easyJet U23664')).toBeInTheDocument();
+    expect(screen.queryByText(/Airbus|Boeing|DHC|Sharklets/i)).not.toBeInTheDocument();
+  });
+
   it('uses the provided QA reference date to autoselect the matching trip day', () => {
     const trip = makeTrip([]);
     trip.days = [
@@ -228,5 +283,15 @@ describe('ItineraryScreen', () => {
 
     expect(screen.getByText('Mykonos Dinner Day')).toBeInTheDocument();
     expect(screen.queryByText('Departure Day')).not.toBeInTheDocument();
+  });
+
+  it('sizes the day selector in whole-chip groups instead of fixed widths', () => {
+    const css = readFileSync(resolve(process.cwd(), 'src/styles/global.css'), 'utf8');
+
+    expect(css).toContain('grid-auto-columns: calc((100% - 1.8rem) / 5)');
+    expect(css).toContain('grid-auto-columns: calc((100% - 1.35rem) / 4)');
+    expect(css).toContain('scroll-snap-stop: always');
+    expect(css).not.toContain('grid-auto-columns: 5.2rem');
+    expect(css).not.toContain('grid-auto-columns: 4.7rem');
   });
 });

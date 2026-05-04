@@ -24,7 +24,7 @@ const segmentSchema = z.object({
   to: z.string().min(3),
   departureLabel: z.string().min(1),
   arrivalLabel: z.string().min(1),
-  equipment: z.string().min(1),
+  duration: z.string().min(1).optional(),
   airline: z.string().min(1),
   cabin: z.string().min(1),
   note: z.string().optional()
@@ -417,7 +417,6 @@ export function migrateLegacyDataToSource(legacy) {
           to: segment.split(' -> ')[1] || '',
           departureLabel: segment.split(' -> ')[0] || segment,
           arrivalLabel: segment.split(' -> ')[1] || segment,
-          equipment: segment,
           airline: entry.provider || 'Reservation',
           cabin: entry.cabin || 'Details'
         }))

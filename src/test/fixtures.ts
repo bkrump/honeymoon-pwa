@@ -39,7 +39,7 @@ export const sampleTripSource = {
           to: 'Vancouver (YVR)',
           departureLabel: '15:25 Portland (PDX)',
           arrivalLabel: '16:44 Vancouver (YVR)',
-          equipment: 'De Havilland DHC-8 400',
+          duration: '1h 19m',
           airline: 'Air Canada',
           cabin: 'Economy'
         }

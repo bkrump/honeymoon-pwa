@@ -150,11 +150,7 @@ function buildSummaryItems(event: TripEvent, headline?: string): SummaryItem[] {
   const rawItems = (() => {
     switch (event.type) {
     case 'flight':
-      return [
-        event.duration ? { label: 'Duration', value: event.duration } : null,
-        event.cabin ? { label: 'Cabin', value: event.cabin } : null,
-        event.layovers.length ? { label: 'Stops', value: event.layovers.join(' · ') } : null
-      ];
+      return [];
     case 'car':
       return [
         event.location ? { label: 'Pickup', value: event.location } : null,
@@ -193,6 +189,8 @@ function buildSummaryItems(event: TripEvent, headline?: string): SummaryItem[] {
 }
 
 function buildMetaItems(event: TripEvent, headline: string | undefined, summaryItems: SummaryItem[]): MetaItem[] {
+  if (event.type === 'flight') return [];
+
   const references = [event.title, headline, ...summaryItems.map((item) => item.value)];
 
   return metaRows.flatMap((row) => {
@@ -323,6 +321,80 @@ function EventLocationRow({ label, mapHref }: { label: string; mapHref: string |
   );
 }
 
+function getDetailValue(event: TripEvent, prefix: string) {
+  const match = event.details.find((detail) => detail.toLowerCase().startsWith(prefix.toLowerCase()));
+  return match?.replace(new RegExp(`^${prefix}\\s*`, 'i'), '').trim();
+}
+
+function getFlightStartLabel(event: TripEvent) {
+  return event.segments[0]?.departureLabel ?? getDetailValue(event, 'Departs') ?? event.timeLabel;
+}
+
+function getFlightEndLabel(event: TripEvent) {
+  return event.segments[event.segments.length - 1]?.arrivalLabel ?? getDetailValue(event, 'Arrives') ?? event.endDate;
+}
+
+function FlightOverview({ event }: { event: TripEvent }) {
+  const items = [
+    { label: 'Start', value: getFlightStartLabel(event) },
+    { label: 'End', value: getFlightEndLabel(event) },
+    event.duration ? { label: 'Duration', value: event.duration } : null
+  ].filter((item): item is SummaryItem => Boolean(item));
+
+  return (
+    <dl className="flight-overview" aria-label="Flight timing">
+      {items.map((item) => (
+        <div key={`${event.id}-${item.label}`} className="flight-overview-item">
+          <dt>{item.label}</dt>
+          <dd>{item.value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+function FlightSegmentList({ event }: { event: TripEvent }) {
+  if (!event.segments.length) return null;
+
+  return (
+    <div className="timeline-block flight-segments-block">
+      <p className="list-label">Segments</p>
+      <div className="segment-list flight-segment-list">
+        {event.segments.map((segment, index) => (
+          <div className="segment-item flight-segment-card" key={`${event.id}-segment-${index}`}>
+            <div className="segment-route">
+              <strong>{segment.from}</strong>
+              <span />
+              <strong>{segment.to}</strong>
+            </div>
+            <dl className="flight-segment-times">
+              <div>
+                <dt>Depart</dt>
+                <dd>{segment.departureLabel}</dd>
+              </div>
+              <div>
+                <dt>Arrive</dt>
+                <dd>{segment.arrivalLabel}</dd>
+              </div>
+              {segment.duration ? (
+                <div>
+                  <dt>Duration</dt>
+                  <dd>{segment.duration}</dd>
+                </div>
+              ) : null}
+            </dl>
+            <div className="flight-segment-meta">
+              <span>{segment.airline}</span>
+              <span>{segment.cabin}</span>
+            </div>
+            {segment.note ? <p>{segment.note}</p> : null}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function FreeTimeRow({ event }: { event: TripEvent }) {
   const mapHref = getMapHref(event);
   const locationLabel = getLocationLabel(event, mapHref);
@@ -378,6 +450,7 @@ function EventCard({ event }: { event: TripEvent }) {
             {headline && event.type !== 'flight' ? <p className="event-headline">{headline}</p> : null}
           </div>
         </div>
+        {event.type === 'flight' ? <FlightOverview event={event} /> : null}
         {locationLabel ? <EventLocationRow label={locationLabel} mapHref={mapHref} /> : null}
         {summaryItems.length ? (
           <dl className="event-summary-grid">
@@ -429,28 +502,7 @@ function EventCard({ event }: { event: TripEvent }) {
               </div>
             ) : null}
 
-            {event.segments.length ? (
-              <div className="timeline-block">
-                <p className="list-label">Segments</p>
-                <div className="segment-list">
-                  {event.segments.map((segment, index) => (
-                    <div className="segment-item" key={`${event.id}-segment-${index}`}>
-                      <div className="segment-route">
-                        <strong>{segment.from}</strong>
-                        <span />
-                        <strong>{segment.to}</strong>
-                      </div>
-                      <p>{segment.departureLabel}</p>
-                      <p>{segment.arrivalLabel}</p>
-                      <p>
-                        {segment.airline} · {segment.equipment} · {segment.cabin}
-                      </p>
-                      {segment.note ? <p>{segment.note}</p> : null}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : null}
+            {event.type === 'flight' ? <FlightSegmentList event={event} /> : null}
 
             {event.layovers.length ? (
               <div className="list-block">
@@ -482,20 +534,31 @@ function EventCard({ event }: { event: TripEvent }) {
 
 function revealChip(container: HTMLDivElement | null, button: HTMLButtonElement | null, behavior: ScrollBehavior = 'smooth') {
   if (!container || !button) return;
-  const chipStart = button.offsetLeft;
-  const chipEnd = chipStart + button.offsetWidth;
-  const viewStart = container.scrollLeft;
-  const viewEnd = viewStart + container.clientWidth;
+  const chips = Array.from(container.querySelectorAll<HTMLButtonElement>('.day-chip'));
+  const activeIndex = chips.indexOf(button);
+  if (activeIndex < 0) return;
 
-  if (chipStart >= viewStart && chipEnd <= viewEnd) return;
+  const styles = window.getComputedStyle(container);
+  const gap = Number.parseFloat(styles.columnGap) || Number.parseFloat(styles.gap) || 0;
+  const paddingLeft = Number.parseFloat(styles.paddingLeft) || 0;
+  const paddingRight = Number.parseFloat(styles.paddingRight) || 0;
+  const chipWidth = button.getBoundingClientRect().width;
+  const contentWidth = container.clientWidth - paddingLeft - paddingRight;
+  const step = chipWidth + gap;
 
-  if (chipStart < viewStart) {
-    container.scrollTo({ left: Math.max(0, chipStart - 12), behavior });
-    return;
-  }
+  if (chipWidth <= 0 || contentWidth <= 0 || step <= 0) return;
 
+  const visibleSlots = Math.max(1, Math.min(chips.length, Math.round((contentWidth + gap) / step)));
+  const desiredFirstIndex = Math.max(0, activeIndex - Math.floor(visibleSlots / 2));
+  const targetIndex = Math.min(desiredFirstIndex, Math.max(0, chips.length - visibleSlots));
+  const containerRect = container.getBoundingClientRect();
+  const targetRect = chips[targetIndex].getBoundingClientRect();
   const max = Math.max(0, container.scrollWidth - container.clientWidth);
-  container.scrollTo({ left: Math.min(max, chipEnd - container.clientWidth + 12), behavior });
+  const targetLeft = Math.min(max, Math.max(0, targetRect.left - containerRect.left + container.scrollLeft - paddingLeft));
+
+  if (Math.abs(container.scrollLeft - targetLeft) > 1) {
+    container.scrollTo({ left: targetLeft, behavior });
+  }
 }
 
 export function ItineraryScreen({ trip, referenceDate }: ItineraryScreenProps) {

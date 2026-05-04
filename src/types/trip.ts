@@ -18,7 +18,7 @@ export interface TripSegment {
   to: string;
   departureLabel: string;
   arrivalLabel: string;
-  equipment: string;
+  duration?: string;
   airline: string;
   cabin: string;
   note?: string;
