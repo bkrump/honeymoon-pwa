@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { TripData, TripEvent, TripEventType } from '../types/trip';
-import { formatDayChip, formatLongDate } from '../lib/date';
+import { formatDayChip, formatLongDate, parseISODate } from '../lib/date';
 import { getInitialSelectedDate } from '../lib/trip';
 
 interface ItineraryScreenProps {
@@ -72,6 +72,10 @@ function renderLinkedText(value: string): ReactNode {
 function getAirportCode(value: string) {
   const match = value.match(/\(([A-Z0-9]{3,4})\)/);
   return match ? match[1] : value;
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function normalizeComparableText(value: string) {
@@ -145,6 +149,12 @@ function buildHeadline(event: TripEvent) {
     default:
       return undefined;
   }
+}
+
+function getDisplayTitle(event: TripEvent) {
+  return event.type === 'flight'
+    ? event.title.replace(/\s*\(\d+\s+segments?\)\s*$/i, '')
+    : event.title;
 }
 
 function buildSummaryItems(event: TripEvent, headline?: string): SummaryItem[] {
@@ -224,6 +234,33 @@ function isGenericDetail(value: string) {
   return genericDetailPattern.test(value.trim());
 }
 
+function getConfirmationTokens(event: TripEvent) {
+  return (event.confirmationCode?.match(/[A-Z0-9]{5,}/gi) ?? []).map((token) => token.toLowerCase());
+}
+
+function isRedundantFlightDetail(event: TripEvent, value: string) {
+  if (event.type !== 'flight') return false;
+
+  const normalizedDetail = normalizeComparableText(value);
+  const confirmationTokens = getConfirmationTokens(event);
+  const repeatsConfirmation =
+    /(booking reference|confirmation)/i.test(value) &&
+    confirmationTokens.some((token) => normalizedDetail.includes(token));
+  const repeatsAirline = event.segments.some((segment) => {
+    const normalizedAirline = normalizeComparableText(segment.airline);
+    return normalizedAirline && (
+      normalizedDetail === normalizedAirline ||
+      normalizedDetail.includes(normalizedAirline) ||
+      normalizedAirline.includes(normalizedDetail)
+    );
+  });
+  const repeatsConnection = /connection departs/i.test(value) && event.layovers.length > 0;
+  const repeatsSegmentSeats = /seats?:/i.test(value) && event.segments.some((segment) => /^seats?\b/i.test(segment.cabin));
+  const lowSignalProtection = /protected by connectsure/i.test(value);
+
+  return repeatsConfirmation || repeatsAirline || repeatsConnection || repeatsSegmentSeats || lowSignalProtection;
+}
+
 function buildDetailContent(event: TripEvent, headline: string | undefined, summaryItems: SummaryItem[], metaItems: MetaItem[]) {
   const references = [
     event.title,
@@ -232,7 +269,13 @@ function buildDetailContent(event: TripEvent, headline: string | undefined, summ
     ...metaItems.map((item) => item.value)
   ];
 
-  const visibleDetails = event.details.filter((item) => !hasGoogleMapsLink(item) && !isGenericDetail(item) && !isRedundantValue(item, references));
+  const visibleDetails = event.details.filter(
+    (item) =>
+      !hasGoogleMapsLink(item) &&
+      !isGenericDetail(item) &&
+      !isRedundantValue(item, references) &&
+      !isRedundantFlightDetail(event, item)
+  );
   const supportCopy =
     event.type === 'note' &&
     visibleDetails.length === 1 &&
@@ -277,7 +320,7 @@ function getLocationLabel(event: TripEvent, mapHref: string | null) {
 }
 
 function shouldShowTypeChip(event: TripEvent) {
-  return event.type === 'flight' || event.type === 'car' || event.type === 'hotel' || event.type === 'transfer';
+  return event.type === 'car' || event.type === 'hotel' || event.type === 'transfer';
 }
 
 function isFreeTimeNote(event: TripEvent) {
@@ -335,6 +378,84 @@ function getFlightEndLabel(event: TripEvent) {
   return event.segments[event.segments.length - 1]?.arrivalLabel ?? getDetailValue(event, 'Arrives') ?? event.endDate;
 }
 
+function parseAirportPoint(value: string | undefined) {
+  if (!value) return { code: '', name: '' };
+
+  const match = value.match(/^(.*?)\s*\(([A-Z0-9]{3,4})\)\s*$/);
+  if (match) {
+    return {
+      code: match[2],
+      name: match[1].trim()
+    };
+  }
+
+  return {
+    code: getAirportCode(value),
+    name: value.replace(/\s*\([A-Z0-9]{3,4}\)\s*$/, '').trim()
+  };
+}
+
+function stripAirportFromLabel(value: string, airport: { code: string; name: string }) {
+  if (!value) return value;
+
+  let cleaned = value;
+  if (airport.name && airport.code) {
+    cleaned = cleaned.replace(new RegExp(`\\s*${escapeRegExp(airport.name)}\\s*\\(${escapeRegExp(airport.code)}\\)`, 'gi'), '');
+  }
+
+  if (airport.code) {
+    cleaned = cleaned.replace(new RegExp(`\\s*\\(${escapeRegExp(airport.code)}\\)`, 'gi'), '');
+  }
+
+  return cleaned
+    .replace(/\s+,/g, ',')
+    .replace(/,\s*,/g, ',')
+    .replace(/,\s*$/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function getFlightEndpoints(event: TripEvent) {
+  const firstSegment = event.segments[0];
+  const lastSegment = event.segments[event.segments.length - 1];
+  const routeParts = event.location?.split(/\s*->\s*/) ?? [];
+  const origin = parseAirportPoint(firstSegment?.from ?? routeParts[0]);
+  const destination = parseAirportPoint(lastSegment?.to ?? routeParts[routeParts.length - 1]);
+
+  return {
+    origin,
+    destination,
+    departure: addFlightDateContext(stripAirportFromLabel(getFlightStartLabel(event), origin), event.startDate),
+    arrival: addFlightDateContext(stripAirportFromLabel(getFlightEndLabel(event), destination), event.endDate)
+  };
+}
+
+function getFlightViaLabel(event: TripEvent) {
+  if (event.segments.length <= 1) return 'Nonstop';
+
+  const points = [event.segments[0].from, ...event.segments.map((segment) => segment.to)].map(parseAirportPoint);
+  const viaCodes = points.slice(1, -1).map((point) => point.code || point.name).filter(Boolean);
+
+  return viaCodes.length ? `via ${viaCodes.join(' + ')}` : `${event.segments.length} segments`;
+}
+
+function getFlightFactLabel(value: string) {
+  return /^seats?\b/i.test(value) ? 'Seats' : 'Cabin';
+}
+
+function hasCalendarContext(value: string) {
+  return /\b(?:mon|tue|wed|thu|fri|sat|sun|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\b/i.test(value);
+}
+
+function formatFlightDatePrefix(isoDate: string) {
+  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(parseISODate(isoDate));
+}
+
+function addFlightDateContext(value: string, isoDate: string) {
+  if (!value || hasCalendarContext(value)) return value;
+  return `${formatFlightDatePrefix(isoDate)}, ${value}`;
+}
+
 function CarOverview({ event, mapHref, locationLabel }: { event: TripEvent; mapHref: string | null; locationLabel: string | null }) {
   const items = [
     event.timeLabel ? { label: 'Pickup window', value: event.timeLabel } : null,
@@ -361,24 +482,45 @@ function CarOverview({ event, mapHref, locationLabel }: { event: TripEvent; mapH
 }
 
 function FlightOverview({ event }: { event: TripEvent }) {
-  const rawItems: Array<SummaryItem | null> = [
-    { label: 'Start', value: getFlightStartLabel(event), priority: 'primary' as const },
-    { label: 'End', value: getFlightEndLabel(event), priority: 'primary' as const },
-    event.duration ? { label: 'Duration', value: event.duration, priority: 'primary' as const } : null,
-    event.cabin ? { label: 'Cabin', value: event.cabin, priority: 'secondary' as const } : null,
-    event.confirmationCode ? { label: 'Confirmation', value: event.confirmationCode, priority: 'secondary' as const } : null
-  ];
-  const items = rawItems.filter((item): item is SummaryItem => item !== null);
+  const { origin, destination, departure, arrival } = getFlightEndpoints(event);
+  const hasSegmentSeats = event.segments.some((segment) => /^seats?\b/i.test(segment.cabin));
+  const showCabinFact = Boolean(event.cabin && !(hasSegmentSeats && /^seats?\b/i.test(event.cabin)));
+  const facts = [
+    showCabinFact && event.cabin ? { label: getFlightFactLabel(event.cabin), value: event.cabin } : null,
+    event.confirmationCode ? { label: 'Code', value: event.confirmationCode } : null
+  ].filter((item): item is SummaryItem => item !== null);
 
   return (
-    <dl className="flight-overview" aria-label="Flight timing">
-      {items.map((item) => (
-        <div key={`${event.id}-${item.label}`} className={`flight-overview-item ${item.priority === 'primary' ? 'primary' : 'secondary'}`}>
-          <dt>{item.label}</dt>
-          <dd>{item.value}</dd>
+    <div className="flight-plan" aria-label="Flight summary">
+      <div className="flight-route-board">
+        <div className="flight-endpoint">
+          <span>From</span>
+          <strong>{origin.code || origin.name}</strong>
+          {origin.name ? <p>{origin.name}</p> : null}
+          <time>{departure}</time>
         </div>
-      ))}
-    </dl>
+        <div className="flight-path">
+          <span>{getFlightViaLabel(event)}</span>
+          <strong>{event.duration ?? 'Flight'}</strong>
+        </div>
+        <div className="flight-endpoint arrival">
+          <span>To</span>
+          <strong>{destination.code || destination.name}</strong>
+          {destination.name ? <p>{destination.name}</p> : null}
+          <time>{arrival}</time>
+        </div>
+      </div>
+      {facts.length ? (
+        <dl className="flight-facts">
+          {facts.map((item) => (
+            <div key={`${event.id}-${item.label}`}>
+              <dt>{item.label}</dt>
+              <dd>{item.value}</dd>
+            </div>
+          ))}
+        </dl>
+      ) : null}
+    </div>
   );
 }
 
@@ -415,40 +557,51 @@ function LayoverList({ layovers }: { layovers: string[] }) {
 function FlightSegmentList({ event }: { event: TripEvent }) {
   if (!event.segments.length) return null;
 
+  const uniqueCabins = new Set(event.segments.map((segment) => normalizeComparableText(segment.cabin)).filter(Boolean));
+  const showSegmentCabins = uniqueCabins.size > 1 || !event.cabin;
+
   return (
     <div className="timeline-block flight-segments-block">
       <p className="list-label">Segments</p>
       <div className="segment-list flight-segment-list">
-        {event.segments.map((segment, index) => (
-          <div className="segment-item flight-segment-card" key={`${event.id}-segment-${index}`}>
-            <div className="segment-route">
-              <strong>{segment.from}</strong>
-              <span />
-              <strong>{segment.to}</strong>
-            </div>
-            <dl className="flight-segment-times">
-              <div>
-                <dt>Depart</dt>
-                <dd>{segment.departureLabel}</dd>
-              </div>
-              <div>
-                <dt>Arrive</dt>
-                <dd>{segment.arrivalLabel}</dd>
-              </div>
-              {segment.duration ? (
+        {event.segments.map((segment, index) => {
+          const origin = parseAirportPoint(segment.from);
+          const destination = parseAirportPoint(segment.to);
+          const departure = stripAirportFromLabel(segment.departureLabel, origin);
+          const arrival = stripAirportFromLabel(segment.arrivalLabel, destination);
+
+          return (
+            <div className="segment-item flight-segment-card" key={`${event.id}-segment-${index}`}>
+              <div className="flight-segment-header">
                 <div>
-                  <dt>Duration</dt>
-                  <dd>{segment.duration}</dd>
+                  <p>{segment.airline}</p>
+                  <div className="segment-route">
+                    <strong>{origin.code || segment.from}</strong>
+                    <span />
+                    <strong>{destination.code || segment.to}</strong>
+                  </div>
+                </div>
+                {segment.duration ? <span className="flight-segment-duration">{segment.duration}</span> : null}
+              </div>
+              <dl className="flight-segment-times">
+                <div>
+                  <dt>Depart</dt>
+                  <dd>{departure}</dd>
+                </div>
+                <div>
+                  <dt>Arrive</dt>
+                  <dd>{arrival}</dd>
+                </div>
+              </dl>
+              {showSegmentCabins ? (
+                <div className="flight-segment-meta">
+                  <span>{segment.cabin}</span>
                 </div>
               ) : null}
-            </dl>
-            <div className="flight-segment-meta">
-              <span>{segment.airline}</span>
-              <span>{segment.cabin}</span>
+              {segment.note ? <p>{segment.note}</p> : null}
             </div>
-            {segment.note ? <p>{segment.note}</p> : null}
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -473,6 +626,7 @@ function FreeTimeRow({ event }: { event: TripEvent }) {
 
 function EventCard({ event }: { event: TripEvent }) {
   const headline = buildHeadline(event);
+  const displayTitle = getDisplayTitle(event);
   const summaryItems = buildSummaryItems(event, headline);
   const metaItems = buildMetaItems(event, headline, summaryItems);
   const { supportCopy, detailPills, detailItems } = buildDetailContent(event, headline, summaryItems, metaItems);
@@ -480,6 +634,7 @@ function EventCard({ event }: { event: TripEvent }) {
   const locationLabel = getLocationLabel(event, mapHref);
   const showTypeChip = shouldShowTypeChip(event);
   const showCodeBadge = Boolean(event.confirmationCode && event.type !== 'flight');
+  const showTimeBadge = event.type !== 'flight';
   const hasExpandedContent = Boolean(metaItems.length || event.segments.length || event.layovers.length || detailItems.length);
   const eventCardClassName = [
     'event-card',
@@ -494,9 +649,11 @@ function EventCard({ event }: { event: TripEvent }) {
   return (
     <article className={eventCardClassName}>
       <div className="event-card-shell">
-        <div className="event-card-topline">
-          <span className="event-time-badge">{event.timeLabel}</span>
-        </div>
+        {showTimeBadge ? (
+          <div className="event-card-topline">
+            <span className="event-time-badge">{event.timeLabel}</span>
+          </div>
+        ) : null}
         <div className="event-card-heading">
           <div className="event-title-block">
             {showTypeChip || showCodeBadge ? (
@@ -505,8 +662,7 @@ function EventCard({ event }: { event: TripEvent }) {
                 {showCodeBadge ? <span className="event-code-badge">{event.confirmationCode}</span> : null}
               </div>
             ) : null}
-            {event.type === 'flight' && headline ? <p className="event-route-line">{headline}</p> : null}
-            <h4>{event.title}</h4>
+            <h4>{displayTitle}</h4>
             {headline && event.type !== 'flight' ? <p className="event-headline">{headline}</p> : null}
           </div>
         </div>
@@ -536,7 +692,7 @@ function EventCard({ event }: { event: TripEvent }) {
 
         {supportCopy ? <p className="event-support-copy">{renderLinkedText(supportCopy)}</p> : null}
 
-        {event.confirmationCode ? (
+        {event.confirmationCode && event.type !== 'flight' ? (
           <div className="event-actions">
             <button className="event-action" type="button" onClick={() => copyValue(event.confirmationCode!)}>
               Copy code

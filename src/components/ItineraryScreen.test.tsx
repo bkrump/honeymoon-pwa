@@ -208,7 +208,7 @@ describe('ItineraryScreen', () => {
     expect(screen.queryByText('Land at Mykonos Airport (JMK)')).not.toBeInTheDocument();
   });
 
-  it('prioritizes flight start, end, and duration without showing aircraft types', () => {
+  it('renders flights as a compact route summary without duplicated timing labels', () => {
     const trip = makeTrip([
       {
         id: 'flight-mxp-rak:2026-06-21',
@@ -221,7 +221,7 @@ describe('ItineraryScreen', () => {
         role: 'single',
         location: 'JMK -> MXP -> RAK',
         duration: '12h 25m',
-        details: [],
+        details: ['Booking reference: CBCXV5FG'],
         layovers: ['Milan Malpensa (MXP): 6h 15m self-transfer'],
         segments: [
           {
@@ -250,15 +250,26 @@ describe('ItineraryScreen', () => {
 
     renderItinerary(trip);
 
-    expect(screen.getByText('Start')).toBeInTheDocument();
-    expect(screen.getAllByText('Sun Jun 21, 10:30 AM Mykonos (JMK)')).toHaveLength(2);
-    expect(screen.getByText('End')).toBeInTheDocument();
-    expect(screen.getAllByText('Sun Jun 21, 8:55 PM Marrakesh (RAK)')).toHaveLength(2);
-    expect(screen.getAllByText('Duration')).toHaveLength(3);
+    expect(screen.getByText('Mykonos to Marrakech')).toBeInTheDocument();
+    expect(screen.queryByText('Mykonos to Marrakech (2 segments)')).not.toBeInTheDocument();
+    expect(screen.getByText('From')).toBeInTheDocument();
+    expect(screen.getByText('To')).toBeInTheDocument();
+    expect(screen.getAllByText('JMK').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('RAK').length).toBeGreaterThan(0);
+    expect(screen.getByText('via MXP')).toBeInTheDocument();
     expect(screen.getByText('12h 25m')).toBeInTheDocument();
     expect(screen.getByText('2h 45m')).toBeInTheDocument();
     expect(screen.getByText('3h 25m')).toBeInTheDocument();
+    expect(screen.getAllByText('Sun Jun 21, 10:30 AM')).toHaveLength(2);
+    expect(screen.getAllByText('Sun Jun 21, 8:55 PM')).toHaveLength(2);
     expect(screen.getByText('easyJet U23664')).toBeInTheDocument();
+    expect(screen.queryByText('Start')).not.toBeInTheDocument();
+    expect(screen.queryByText('End')).not.toBeInTheDocument();
+    expect(screen.queryByText('Duration')).not.toBeInTheDocument();
+    expect(screen.queryByText('Booking reference: CBCXV5FG')).not.toBeInTheDocument();
+    expect(screen.queryByText('Copy code')).not.toBeInTheDocument();
+    expect(screen.queryByText('Sun Jun 21, 10:30 AM Mykonos (JMK)')).not.toBeInTheDocument();
+    expect(screen.queryByText('Sun Jun 21, 8:55 PM Marrakesh (RAK)')).not.toBeInTheDocument();
     expect(screen.queryByText(/Airbus|Boeing|DHC|Sharklets/i)).not.toBeInTheDocument();
   });
 
