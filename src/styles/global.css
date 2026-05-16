@@ -67,6 +67,32 @@ button {
   cursor: pointer;
 }
 
+button:disabled {
+  cursor: default;
+}
+
+button,
+a,
+.day-chip,
+.event-card,
+.wordle-tile,
+.key,
+.history-row {
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    color 180ms ease,
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+button:not(:disabled):active,
+.day-chip:active,
+.event-location-row a:active {
+  transform: translateY(1px) scale(0.99);
+}
+
 .app-frame {
   position: relative;
   min-height: 100vh;
@@ -392,6 +418,19 @@ button {
   opacity: 0.65;
 }
 
+.primary-button:not(:disabled):hover,
+.toast-button:not(:disabled):hover,
+.wordle-entry button:not(:disabled):hover {
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--theme-accent) 30%, transparent);
+  transform: translateY(-1px);
+}
+
+.auth-input:focus,
+.wordle-entry input:focus {
+  outline: 3px solid color-mix(in srgb, var(--theme-accent) 26%, transparent);
+  border-color: color-mix(in srgb, var(--theme-accent) 42%, rgba(42, 73, 104, 0.12));
+}
+
 .itinerary-screen {
   display: grid;
   gap: 0.8rem;
@@ -524,6 +563,22 @@ button {
   box-shadow: 0 10px 22px color-mix(in srgb, var(--theme-accent) 18%, transparent);
 }
 
+.day-chip:not(.active):hover {
+  background: rgba(255, 255, 255, 0.76);
+  border-color: color-mix(in srgb, var(--theme-accent) 18%, rgba(42, 73, 104, 0.1));
+}
+
+.day-chip:focus-visible,
+.event-location-row a:focus-visible,
+.event-action:focus-visible,
+.key:focus-visible,
+.wordle-entry button:focus-visible,
+.primary-button:focus-visible,
+.toast-button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--theme-accent) 26%, transparent);
+  outline-offset: 3px;
+}
+
 .day-page-single {
   display: grid;
   min-width: 0;
@@ -608,6 +663,10 @@ button {
 .event-card.expanded {
   border-color: color-mix(in srgb, var(--event-color) 22%, rgba(34, 63, 88, 0.08));
   box-shadow: 0 18px 30px rgba(14, 23, 39, 0.12);
+}
+
+.event-card:hover {
+  border-color: color-mix(in srgb, var(--event-color) 26%, rgba(34, 63, 88, 0.08));
 }
 
 .event-note {
@@ -721,6 +780,11 @@ button {
   font-size: 0.72rem;
   font-weight: 900;
   text-decoration: none;
+}
+
+.event-location-row a:hover {
+  background: color-mix(in srgb, var(--event-color, var(--theme-accent)) 18%, white 82%);
+  transform: translateY(-1px);
 }
 
 .event-chip {
@@ -1334,8 +1398,8 @@ button {
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(circle at 12% 0%, color-mix(in srgb, var(--theme-accent) 22%, transparent) 0, transparent 30%),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.42), transparent 45%);
+    radial-gradient(circle at 8% 0%, color-mix(in srgb, var(--theme-accent) 18%, transparent) 0, transparent 28%),
+    radial-gradient(circle at 100% 18%, rgba(255, 255, 255, 0.48) 0, transparent 32%);
 }
 
 .game-card > * {
@@ -1455,6 +1519,8 @@ button {
 .wordle-tile.filled {
   border-color: color-mix(in srgb, var(--theme-accent) 28%, rgba(42, 73, 104, 0.1));
   background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 10px 18px rgba(20, 34, 54, 0.05);
+  transform: translateY(-1px);
 }
 
 .wordle-tile.correct,
@@ -1557,6 +1623,12 @@ button {
   font-size: 0.78rem;
 }
 
+.key:not(:disabled):hover {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: color-mix(in srgb, var(--theme-accent) 18%, rgba(42, 73, 104, 0.08));
+  transform: translateY(-1px);
+}
+
 .key.wide {
   max-width: 6.2rem;
   flex-basis: 5.6rem;
@@ -1590,15 +1662,18 @@ button {
 
 .history-list {
   display: grid;
-  gap: 0.48rem;
+  gap: 0;
   margin-top: 0.72rem;
 }
 
 .history-row {
-  padding: 0.6rem 0.68rem;
-  border-radius: 1rem;
-  background: rgba(255, 255, 255, 0.5);
-  border: 1px solid rgba(42, 73, 104, 0.06);
+  padding: 0.68rem 0.1rem;
+  border-bottom: 1px solid rgba(42, 73, 104, 0.08);
+  background: transparent;
+}
+
+.history-row:last-child {
+  border-bottom: 0;
 }
 
 .history-row strong {
@@ -1675,6 +1750,22 @@ button {
   letter-spacing: 0.02em;
 }
 
+.tab-item::before {
+  content: '';
+  position: absolute;
+  inset: 0.08rem auto;
+  left: 50%;
+  z-index: -1;
+  width: min(5.75rem, calc(100% - 0.2rem));
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--theme-tab-tint) 10%, transparent);
+  opacity: 0;
+  transform: translateX(-50%) scale(0.96);
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
 .tab-item svg {
   width: 1.35rem;
   height: 1.35rem;
@@ -1682,6 +1773,15 @@ button {
 
 .tab-item.active {
   color: var(--theme-tab-tint);
+}
+
+.tab-item.active::before {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+}
+
+.tab-item:not(.active):hover {
+  color: rgba(43, 69, 95, 0.72);
 }
 
 .tab-item:focus {
@@ -1739,6 +1839,37 @@ button {
 .toast-button.secondary {
   background: rgba(241, 244, 247, 0.98);
   color: var(--ink-900);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes content-rise {
+    from {
+      opacity: 0;
+      transform: translateY(0.55rem);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .hero-copy,
+  .auth-card,
+  .day-page-shell,
+  .game-hero-card,
+  .game-card,
+  .game-history-card {
+    animation: content-rise 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  .game-card {
+    animation-delay: 60ms;
+  }
+
+  .game-history-card {
+    animation-delay: 110ms;
+  }
 }
 
 @media (max-width: 640px) {
