@@ -12,6 +12,7 @@ interface ItineraryScreenProps {
 type SummaryItem = {
   label: string;
   value: string;
+  priority?: 'primary' | 'secondary';
 };
 
 type MetaItem = {
@@ -189,7 +190,7 @@ function buildSummaryItems(event: TripEvent, headline?: string): SummaryItem[] {
 }
 
 function buildMetaItems(event: TripEvent, headline: string | undefined, summaryItems: SummaryItem[]): MetaItem[] {
-  if (event.type === 'flight') return [];
+  if (event.type === 'flight' || event.type === 'car') return [];
 
   const references = [event.title, headline, ...summaryItems.map((item) => item.value)];
 
@@ -334,22 +335,80 @@ function getFlightEndLabel(event: TripEvent) {
   return event.segments[event.segments.length - 1]?.arrivalLabel ?? getDetailValue(event, 'Arrives') ?? event.endDate;
 }
 
-function FlightOverview({ event }: { event: TripEvent }) {
+function CarOverview({ event, mapHref, locationLabel }: { event: TripEvent; mapHref: string | null; locationLabel: string | null }) {
   const items = [
-    { label: 'Start', value: getFlightStartLabel(event) },
-    { label: 'End', value: getFlightEndLabel(event) },
-    event.duration ? { label: 'Duration', value: event.duration } : null
+    event.timeLabel ? { label: 'Pickup window', value: event.timeLabel } : null,
+    event.vehicle ? { label: 'Vehicle', value: event.vehicle } : null,
+    event.driver ? { label: 'Driver', value: event.driver } : null,
+    event.provider ? { label: 'Provider', value: event.provider } : null
   ].filter((item): item is SummaryItem => Boolean(item));
+
+  return (
+    <div className="travel-brief car-brief" aria-label="Car rental essentials">
+      {locationLabel ? <EventLocationRow label={locationLabel} mapHref={mapHref} /> : null}
+      {items.length ? (
+        <dl className="travel-brief-grid">
+          {items.map((item) => (
+            <div key={`${event.id}-${item.label}`} className="travel-brief-item">
+              <dt>{item.label}</dt>
+              <dd>{item.value}</dd>
+            </div>
+          ))}
+        </dl>
+      ) : null}
+    </div>
+  );
+}
+
+function FlightOverview({ event }: { event: TripEvent }) {
+  const rawItems: Array<SummaryItem | null> = [
+    { label: 'Start', value: getFlightStartLabel(event), priority: 'primary' as const },
+    { label: 'End', value: getFlightEndLabel(event), priority: 'primary' as const },
+    event.duration ? { label: 'Duration', value: event.duration, priority: 'primary' as const } : null,
+    event.cabin ? { label: 'Cabin', value: event.cabin, priority: 'secondary' as const } : null,
+    event.confirmationCode ? { label: 'Confirmation', value: event.confirmationCode, priority: 'secondary' as const } : null
+  ];
+  const items = rawItems.filter((item): item is SummaryItem => item !== null);
 
   return (
     <dl className="flight-overview" aria-label="Flight timing">
       {items.map((item) => (
-        <div key={`${event.id}-${item.label}`} className="flight-overview-item">
+        <div key={`${event.id}-${item.label}`} className={`flight-overview-item ${item.priority === 'primary' ? 'primary' : 'secondary'}`}>
           <dt>{item.label}</dt>
           <dd>{item.value}</dd>
         </div>
       ))}
     </dl>
+  );
+}
+
+function splitLayoverLabel(value: string) {
+  const [stop, ...details] = value.split(':');
+  return {
+    stop: stop.trim(),
+    detail: details.join(':').trim()
+  };
+}
+
+function LayoverList({ layovers }: { layovers: string[] }) {
+  if (!layovers.length) return null;
+
+  return (
+    <div className="connection-list" aria-label="Layovers">
+      <p className="list-label">Connections</p>
+      <div className="connection-items">
+        {layovers.map((item) => {
+          const { stop, detail } = splitLayoverLabel(item);
+
+          return (
+            <div className="connection-item" key={item}>
+              <span>{stop}</span>
+              <strong>{detail || item}</strong>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -420,6 +479,7 @@ function EventCard({ event }: { event: TripEvent }) {
   const mapHref = getMapHref(event);
   const locationLabel = getLocationLabel(event, mapHref);
   const showTypeChip = shouldShowTypeChip(event);
+  const showCodeBadge = Boolean(event.confirmationCode && event.type !== 'flight');
   const hasExpandedContent = Boolean(metaItems.length || event.segments.length || event.layovers.length || detailItems.length);
   const eventCardClassName = [
     'event-card',
@@ -439,10 +499,10 @@ function EventCard({ event }: { event: TripEvent }) {
         </div>
         <div className="event-card-heading">
           <div className="event-title-block">
-            {showTypeChip || event.confirmationCode ? (
+            {showTypeChip || showCodeBadge ? (
               <div className="event-badge-row">
                 {showTypeChip ? <span className="event-chip">{typeLabels[event.type]}</span> : null}
-                {event.confirmationCode ? <span className="event-code-badge">{event.confirmationCode}</span> : null}
+                {showCodeBadge ? <span className="event-code-badge">{event.confirmationCode}</span> : null}
               </div>
             ) : null}
             {event.type === 'flight' && headline ? <p className="event-route-line">{headline}</p> : null}
@@ -451,8 +511,9 @@ function EventCard({ event }: { event: TripEvent }) {
           </div>
         </div>
         {event.type === 'flight' ? <FlightOverview event={event} /> : null}
-        {locationLabel ? <EventLocationRow label={locationLabel} mapHref={mapHref} /> : null}
-        {summaryItems.length ? (
+        {event.type === 'car' ? <CarOverview event={event} mapHref={mapHref} locationLabel={locationLabel} /> : null}
+        {locationLabel && event.type !== 'car' ? <EventLocationRow label={locationLabel} mapHref={mapHref} /> : null}
+        {summaryItems.length && event.type !== 'car' ? (
           <dl className="event-summary-grid">
             {summaryItems.map((item) => (
               <div key={`${event.id}-${item.label}`} className="event-summary-item">
@@ -502,9 +563,11 @@ function EventCard({ event }: { event: TripEvent }) {
               </div>
             ) : null}
 
+            {event.type === 'flight' ? <LayoverList layovers={event.layovers} /> : null}
+
             {event.type === 'flight' ? <FlightSegmentList event={event} /> : null}
 
-            {event.layovers.length ? (
+            {event.type !== 'flight' && event.layovers.length ? (
               <div className="list-block">
                 <p className="list-label">Layovers</p>
                 <ul>

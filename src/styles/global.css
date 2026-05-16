@@ -764,7 +764,8 @@ button {
   letter-spacing: 0.02em;
 }
 
-.event-summary-grid {
+.event-summary-grid,
+.travel-brief-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.62rem;
@@ -773,27 +774,54 @@ button {
 
 .flight-overview {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.52rem;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.5rem;
   margin: 0;
-  padding: 0.58rem;
-  border-radius: 1.05rem;
+  padding: 0.5rem;
+  border-radius: 0.9rem;
   background:
     linear-gradient(135deg, color-mix(in srgb, var(--event-color) 13%, white 87%), rgba(255, 255, 255, 0.76)),
     rgba(246, 249, 252, 0.88);
   border: 1px solid color-mix(in srgb, var(--event-color) 18%, rgba(38, 61, 82, 0.08));
 }
 
-.flight-overview-item {
+.flight-overview-item,
+.travel-brief-item {
   min-width: 0;
-  padding: 0.62rem 0.68rem;
-  border-radius: 0.82rem;
+  padding: 0.62rem 0.66rem;
+  border-radius: 0.68rem;
   background: rgba(255, 255, 255, 0.74);
   border: 1px solid rgba(38, 61, 82, 0.06);
 }
 
+.flight-overview-item.primary {
+  grid-column: span 2;
+}
+
+.flight-overview-item.secondary {
+  grid-column: span 3;
+  background: rgba(255, 255, 255, 0.56);
+}
+
+.travel-brief {
+  display: grid;
+  gap: 0.58rem;
+  padding: 0.5rem;
+  border-radius: 0.9rem;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--event-color) 10%, white 90%), rgba(255, 255, 255, 0.74)),
+    rgba(246, 249, 252, 0.86);
+  border: 1px solid color-mix(in srgb, var(--event-color) 16%, rgba(38, 61, 82, 0.08));
+}
+
+.travel-brief .event-location-row {
+  background: rgba(255, 255, 255, 0.76);
+}
+
 .flight-overview-item dt,
-.flight-segment-times dt {
+.flight-segment-times dt,
+.travel-brief-item dt,
+.connection-item span {
   margin: 0;
   color: color-mix(in srgb, var(--event-color) 76%, var(--ink-500) 24%);
   font-size: 0.64rem;
@@ -803,7 +831,8 @@ button {
 }
 
 .flight-overview-item dd,
-.flight-segment-times dd {
+.flight-segment-times dd,
+.travel-brief-item dd {
   margin: 0.34rem 0 0;
   color: var(--ink-900);
   font-size: 0.9rem;
@@ -947,6 +976,38 @@ button {
   background: rgba(248, 251, 253, 0.78);
 }
 
+.connection-list {
+  padding: 0.72rem 0.78rem;
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--event-color) 8%, white 92%);
+  border: 1px solid color-mix(in srgb, var(--event-color) 16%, rgba(38, 61, 82, 0.08));
+}
+
+.connection-items {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.58rem;
+}
+
+.connection-item {
+  display: grid;
+  grid-template-columns: minmax(7.2rem, 0.82fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.52rem 0.58rem;
+  border-radius: 0.72rem;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(38, 61, 82, 0.06);
+}
+
+.connection-item strong {
+  min-width: 0;
+  color: var(--ink-900);
+  font-size: 0.9rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
 .event-free-time {
   --event-color: #647083;
   position: relative;
@@ -1025,8 +1086,8 @@ button {
 
 .flight-segment-card {
   gap: 0.62rem;
-  padding: 0.72rem;
-  border-radius: 0.95rem;
+  padding: 0.68rem;
+  border-radius: 0.82rem;
   background: rgba(255, 255, 255, 0.82);
   border: 1px solid rgba(38, 61, 82, 0.08);
 }
@@ -1664,6 +1725,7 @@ button {
   }
 
   .event-summary-grid,
+  .travel-brief-grid,
   .flight-overview,
   .flight-segment-times,
   .event-meta-grid {
@@ -1671,9 +1733,20 @@ button {
   }
 
   .event-summary-item,
+  .travel-brief-item,
   .flight-overview-item,
   .meta-block {
     padding: 0.7rem 0.78rem;
+  }
+
+  .flight-overview-item.primary,
+  .flight-overview-item.secondary {
+    grid-column: auto;
+  }
+
+  .connection-item {
+    grid-template-columns: 1fr;
+    gap: 0.24rem;
   }
 
   .event-expanded-content {
