@@ -365,6 +365,40 @@ function EventLocationRow({ label, mapHref }: { label: string; mapHref: string |
   );
 }
 
+function TravelCardHeading({ kicker, title, provider }: { kicker: string; title: string; provider?: string }) {
+  return (
+    <div className="travel-card-heading">
+      <div>
+        <span className="travel-card-kicker">{kicker}</span>
+        <h4>{title}</h4>
+      </div>
+      {provider ? <p>{provider}</p> : null}
+    </div>
+  );
+}
+
+function TravelFactGrid({ items }: { items: Array<{ label: string; value: string; copyable?: boolean }> }) {
+  if (!items.length) return null;
+
+  return (
+    <dl className="travel-fact-grid">
+      {items.map((item) => (
+        <div key={`${item.label}-${item.value}`} className={item.copyable ? 'travel-fact-item copyable' : 'travel-fact-item'}>
+          <dt>{item.label}</dt>
+          <dd>
+            <span>{item.value}</span>
+            {item.copyable ? (
+              <button type="button" onClick={() => copyValue(item.value)} aria-label={`Copy ${item.label.toLowerCase()}`}>
+                Copy
+              </button>
+            ) : null}
+          </dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
 function getDetailValue(event: TripEvent, prefix: string) {
   const match = event.details.find((detail) => detail.toLowerCase().startsWith(prefix.toLowerCase()));
   return match?.replace(new RegExp(`^${prefix}\\s*`, 'i'), '').trim();
@@ -443,6 +477,10 @@ function getFlightFactLabel(value: string) {
   return /^seats?\b/i.test(value) ? 'Seats' : 'Cabin';
 }
 
+function getConfirmationFactLabel(value: string) {
+  return /\/|Brian|Divyanka/i.test(value) ? 'Codes' : 'Code';
+}
+
 function hasCalendarContext(value: string) {
   return /\b(?:mon|tue|wed|thu|fri|sat|sun|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\b/i.test(value);
 }
@@ -456,27 +494,30 @@ function addFlightDateContext(value: string, isoDate: string) {
   return `${formatFlightDatePrefix(isoDate)}, ${value}`;
 }
 
+function getTravelDurationLabel(event: TripEvent) {
+  return event.duration?.replace(/\s+total travel$/i, '') ?? 'Check times';
+}
+
 function CarOverview({ event, mapHref, locationLabel }: { event: TripEvent; mapHref: string | null; locationLabel: string | null }) {
   const items = [
-    event.timeLabel ? { label: 'Pickup window', value: event.timeLabel } : null,
+    event.confirmationCode ? { label: 'Confirmation', value: event.confirmationCode, copyable: true } : null,
     event.vehicle ? { label: 'Vehicle', value: event.vehicle } : null,
-    event.driver ? { label: 'Driver', value: event.driver } : null,
-    event.provider ? { label: 'Provider', value: event.provider } : null
-  ].filter((item): item is SummaryItem => Boolean(item));
+    event.driver ? { label: 'Driver', value: event.driver } : null
+  ].filter((item): item is { label: string; value: string; copyable?: boolean } => Boolean(item));
 
   return (
-    <div className="travel-brief car-brief" aria-label="Car rental essentials">
-      {locationLabel ? <EventLocationRow label={locationLabel} mapHref={mapHref} /> : null}
-      {items.length ? (
-        <dl className="travel-brief-grid">
-          {items.map((item) => (
-            <div key={`${event.id}-${item.label}`} className="travel-brief-item">
-              <dt>{item.label}</dt>
-              <dd>{item.value}</dd>
-            </div>
-          ))}
-        </dl>
-      ) : null}
+    <div className="car-command-board" aria-label="Rental car quick reference">
+      <div className="car-pickup-panel">
+        <span>Pickup window</span>
+        <strong>{event.timeLabel}</strong>
+        {locationLabel ? <p>{locationLabel}</p> : null}
+        {mapHref ? (
+          <a className="travel-primary-action" href={mapHref} target="_blank" rel="noreferrer">
+            Open map
+          </a>
+        ) : null}
+      </div>
+      <TravelFactGrid items={items} />
     </div>
   );
 }
@@ -487,39 +528,31 @@ function FlightOverview({ event }: { event: TripEvent }) {
   const showCabinFact = Boolean(event.cabin && !(hasSegmentSeats && /^seats?\b/i.test(event.cabin)));
   const facts = [
     showCabinFact && event.cabin ? { label: getFlightFactLabel(event.cabin), value: event.cabin } : null,
-    event.confirmationCode ? { label: 'Code', value: event.confirmationCode } : null
-  ].filter((item): item is SummaryItem => item !== null);
+    event.confirmationCode ? { label: getConfirmationFactLabel(event.confirmationCode), value: event.confirmationCode } : null
+  ].filter((item): item is { label: string; value: string } => item !== null);
 
   return (
-    <div className="flight-plan" aria-label="Flight summary">
+    <div className="flight-command-board" aria-label="Flight quick reference">
       <div className="flight-route-board">
         <div className="flight-endpoint">
-          <span>From</span>
+          <span>Departs</span>
           <strong>{origin.code || origin.name}</strong>
           {origin.name ? <p>{origin.name}</p> : null}
           <time>{departure}</time>
         </div>
         <div className="flight-path">
           <span>{getFlightViaLabel(event)}</span>
-          <strong>{event.duration ?? 'Flight'}</strong>
+          <strong>{getTravelDurationLabel(event)}</strong>
+          <small>Total</small>
         </div>
         <div className="flight-endpoint arrival">
-          <span>To</span>
+          <span>Arrives</span>
           <strong>{destination.code || destination.name}</strong>
           {destination.name ? <p>{destination.name}</p> : null}
           <time>{arrival}</time>
         </div>
       </div>
-      {facts.length ? (
-        <dl className="flight-facts">
-          {facts.map((item) => (
-            <div key={`${event.id}-${item.label}`}>
-              <dt>{item.label}</dt>
-              <dd>{item.value}</dd>
-            </div>
-          ))}
-        </dl>
-      ) : null}
+      <TravelFactGrid items={facts} />
     </div>
   );
 }
@@ -537,7 +570,7 @@ function LayoverList({ layovers }: { layovers: string[] }) {
 
   return (
     <div className="connection-list" aria-label="Layovers">
-      <p className="list-label">Connections</p>
+      <p className="list-label">Layovers</p>
       <div className="connection-items">
         {layovers.map((item) => {
           const { stop, detail } = splitLayoverLabel(item);
@@ -561,7 +594,7 @@ function FlightSegmentList({ event }: { event: TripEvent }) {
   const showSegmentCabins = uniqueCabins.size > 1 || !event.cabin;
 
   return (
-    <div className="timeline-block flight-segments-block">
+    <div className="timeline-block flight-segments-block" aria-label="Flight segments">
       <p className="list-label">Segments</p>
       <div className="segment-list flight-segment-list">
         {event.segments.map((segment, index) => {
@@ -607,6 +640,21 @@ function FlightSegmentList({ event }: { event: TripEvent }) {
   );
 }
 
+function DetailList({ label = 'Details', items }: { label?: string; items: string[] }) {
+  if (!items.length) return null;
+
+  return (
+    <div className="list-block travel-detail-list">
+      <p className="list-label">{label}</p>
+      <ul>
+        {items.map((item) => (
+          <li key={item}>{renderLinkedText(item)}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function FreeTimeRow({ event }: { event: TripEvent }) {
   const mapHref = getMapHref(event);
   const locationLabel = getLocationLabel(event, mapHref);
@@ -641,10 +689,42 @@ function EventCard({ event }: { event: TripEvent }) {
     `event-${event.type}`,
     'expanded',
     'always-open',
+    event.type === 'flight' || event.type === 'car' ? 'travel-event-card' : '',
     event.type === 'note' && !hasExpandedContent && !summaryItems.length ? 'event-quiet-note' : ''
   ]
     .filter(Boolean)
     .join(' ');
+
+  if (event.type === 'flight') {
+    return (
+      <article className={eventCardClassName}>
+        <div className="event-card-shell travel-card-shell">
+          <TravelCardHeading kicker="Flight plan" title={displayTitle} provider={event.provider} />
+          <FlightOverview event={event} />
+
+          {hasExpandedContent ? (
+            <div className="event-expanded-content travel-expanded-content always-open">
+              <LayoverList layovers={event.layovers} />
+              <FlightSegmentList event={event} />
+              <DetailList label="Need-to-know" items={detailItems} />
+            </div>
+          ) : null}
+        </div>
+      </article>
+    );
+  }
+
+  if (event.type === 'car') {
+    return (
+      <article className={eventCardClassName}>
+        <div className="event-card-shell travel-card-shell">
+          <TravelCardHeading kicker="Rental car" title={displayTitle} provider={event.provider} />
+          <CarOverview event={event} mapHref={mapHref} locationLabel={locationLabel} />
+          <DetailList label="Pickup notes" items={detailItems} />
+        </div>
+      </article>
+    );
+  }
 
   return (
     <article className={eventCardClassName}>
@@ -663,13 +743,11 @@ function EventCard({ event }: { event: TripEvent }) {
               </div>
             ) : null}
             <h4>{displayTitle}</h4>
-            {headline && event.type !== 'flight' ? <p className="event-headline">{headline}</p> : null}
+            {headline ? <p className="event-headline">{headline}</p> : null}
           </div>
         </div>
-        {event.type === 'flight' ? <FlightOverview event={event} /> : null}
-        {event.type === 'car' ? <CarOverview event={event} mapHref={mapHref} locationLabel={locationLabel} /> : null}
-        {locationLabel && event.type !== 'car' ? <EventLocationRow label={locationLabel} mapHref={mapHref} /> : null}
-        {summaryItems.length && event.type !== 'car' ? (
+        {locationLabel ? <EventLocationRow label={locationLabel} mapHref={mapHref} /> : null}
+        {summaryItems.length ? (
           <dl className="event-summary-grid">
             {summaryItems.map((item) => (
               <div key={`${event.id}-${item.label}`} className="event-summary-item">
@@ -692,7 +770,7 @@ function EventCard({ event }: { event: TripEvent }) {
 
         {supportCopy ? <p className="event-support-copy">{renderLinkedText(supportCopy)}</p> : null}
 
-        {event.confirmationCode && event.type !== 'flight' ? (
+        {event.confirmationCode ? (
           <div className="event-actions">
             <button className="event-action" type="button" onClick={() => copyValue(event.confirmationCode!)}>
               Copy code
@@ -719,11 +797,7 @@ function EventCard({ event }: { event: TripEvent }) {
               </div>
             ) : null}
 
-            {event.type === 'flight' ? <LayoverList layovers={event.layovers} /> : null}
-
-            {event.type === 'flight' ? <FlightSegmentList event={event} /> : null}
-
-            {event.type !== 'flight' && event.layovers.length ? (
+            {event.layovers.length ? (
               <div className="list-block">
                 <p className="list-label">Layovers</p>
                 <ul>

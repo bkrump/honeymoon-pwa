@@ -127,6 +127,42 @@ describe('ItineraryScreen', () => {
     );
   });
 
+  it('renders rental cars as a pickup-first quick reference without repeating the provider', () => {
+    const trip = makeTrip([
+      {
+        id: 'car-l4920987018',
+        sourceEventId: 'car-l4920987018',
+        type: 'car',
+        title: 'Hertz Mid-Size SUV Rental',
+        provider: 'Hertz Corporation',
+        confirmationCode: 'L4920987018',
+        timeLabel: '9:00 AM - 2:00 PM',
+        role: 'single',
+        location: 'Eugene Airport / Mahlon Sweet Field (EUG)',
+        address: '28801 Douglas Dr Suite 8, Eugene, OR 97402',
+        driver: 'Brian Krump',
+        vehicle: 'Nissan Rogue (mid-size SUV) or similar',
+        details: ['Unlimited mileage', 'Pre-register online for expedited pickup'],
+        layovers: [],
+        segments: [],
+        startDate: '2026-06-14',
+        endDate: '2026-06-14'
+      }
+    ]);
+
+    renderItinerary(trip);
+
+    expect(screen.getByText('Pickup window')).toBeInTheDocument();
+    expect(screen.getByText('9:00 AM - 2:00 PM')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open map' })).toHaveAttribute(
+      'href',
+      'https://www.google.com/maps/search/?api=1&query=28801%20Douglas%20Dr%20Suite%208%2C%20Eugene%2C%20OR%2097402'
+    );
+    expect(screen.getByText('L4920987018')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Copy confirmation' })).toBeInTheDocument();
+    expect(screen.getAllByText('Hertz Corporation')).toHaveLength(1);
+  });
+
   it('renders flexible open-time notes as lightweight rows instead of full note cards', () => {
     const trip = makeTrip(
       [
@@ -252,8 +288,8 @@ describe('ItineraryScreen', () => {
 
     expect(screen.getByText('Mykonos to Marrakech')).toBeInTheDocument();
     expect(screen.queryByText('Mykonos to Marrakech (2 segments)')).not.toBeInTheDocument();
-    expect(screen.getByText('From')).toBeInTheDocument();
-    expect(screen.getByText('To')).toBeInTheDocument();
+    expect(screen.getByText('Departs')).toBeInTheDocument();
+    expect(screen.getByText('Arrives')).toBeInTheDocument();
     expect(screen.getAllByText('JMK').length).toBeGreaterThan(0);
     expect(screen.getAllByText('RAK').length).toBeGreaterThan(0);
     expect(screen.getByText('via MXP')).toBeInTheDocument();
