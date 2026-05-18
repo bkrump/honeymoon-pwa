@@ -15,14 +15,12 @@ describe('buildHomeDisplay', () => {
         label: 'Brian OOO',
         value: '1',
         unit: 'day',
-        caption: 'until OOO',
         targetDate: '2026-06-11'
       },
       {
-        label: 'Wedding day',
+        label: 'our wedding',
         value: '3',
         unit: 'days',
-        caption: 'until vows',
         targetDate: '2026-06-13'
       }
     ]);

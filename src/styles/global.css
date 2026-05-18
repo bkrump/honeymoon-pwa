@@ -344,73 +344,38 @@ button:not(:disabled):active,
   max-width: 16rem;
 }
 
-.countdown-sidecars {
+.countdown-milestones {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.62rem;
+  gap: 0.42rem;
   width: min(22rem, 100%);
-  margin-top: 1rem;
+  margin-top: 0.98rem;
+  padding-top: 0.82rem;
+  border-top: 1px solid color-mix(in srgb, var(--theme-on-image) 24%, transparent);
 }
 
-.countdown-sidecar {
-  position: relative;
-  min-width: 0;
-  padding: 0.68rem 0.72rem 0.72rem;
-  border-radius: 1rem;
-  overflow: hidden;
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.06)),
-    color-mix(in srgb, var(--theme-on-image) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--theme-on-image) 18%, transparent);
-  box-shadow: 0 16px 34px rgba(10, 18, 31, 0.22);
-  backdrop-filter: blur(16px) saturate(118%);
-  -webkit-backdrop-filter: blur(16px) saturate(118%);
+.countdown-milestone {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.36rem;
+  margin: 0;
+  color: color-mix(in srgb, var(--theme-on-image) 86%, transparent);
+  text-shadow: 0 8px 22px rgba(10, 18, 31, 0.28);
 }
 
-.countdown-sidecar::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 10% 0%, color-mix(in srgb, var(--theme-on-image) 18%, transparent), transparent 56%);
-  pointer-events: none;
-}
-
-.countdown-sidecar span,
-.countdown-sidecar strong,
-.countdown-sidecar p {
-  position: relative;
-  z-index: 1;
-}
-
-.countdown-sidecar span {
-  display: block;
-  color: color-mix(in srgb, var(--theme-on-image) 78%, transparent);
-  font-size: 0.62rem;
-  font-weight: 850;
-  letter-spacing: 0.16em;
-  line-height: 1.25;
-  text-transform: uppercase;
-  text-shadow: 0 8px 20px rgba(10, 18, 31, 0.24);
-}
-
-.countdown-sidecar strong {
-  display: block;
-  margin-top: 0.22rem;
+.countdown-milestone strong {
   color: var(--theme-on-image, #ffffff);
   font-family: 'Fraunces', Georgia, serif;
-  font-size: clamp(1.95rem, 8vw, 3rem);
+  font-size: clamp(1.35rem, 5.6vw, 2rem);
   line-height: 0.9;
-  letter-spacing: -0.06em;
-  text-shadow: 0 12px 28px rgba(10, 18, 31, 0.34);
+  letter-spacing: -0.055em;
 }
 
-.countdown-sidecar p {
-  margin: 0.24rem 0 0;
-  color: color-mix(in srgb, var(--theme-on-image) 84%, transparent);
-  font-size: 0.72rem;
-  font-weight: 760;
-  line-height: 1.3;
-  text-shadow: 0 8px 20px rgba(10, 18, 31, 0.24);
+.countdown-milestone span {
+  font-size: 0.86rem;
+  font-weight: 800;
+  line-height: 1.35;
+  letter-spacing: 0.01em;
 }
 
 .auth-input {
@@ -2182,21 +2147,18 @@ button:not(:disabled):active,
     font-size: 0.92rem;
   }
 
-  .countdown-sidecars {
-    gap: 0.5rem;
-    margin-top: 0.86rem;
+  .countdown-milestones {
+    gap: 0.36rem;
+    margin-top: 0.8rem;
+    padding-top: 0.7rem;
   }
 
-  .countdown-sidecar {
-    padding: 0.62rem 0.64rem 0.66rem;
+  .countdown-milestone strong {
+    font-size: clamp(1.28rem, 7vw, 1.72rem);
   }
 
-  .countdown-sidecar strong {
-    font-size: clamp(1.85rem, 11vw, 2.5rem);
-  }
-
-  .countdown-sidecar p {
-    font-size: 0.68rem;
+  .countdown-milestone span {
+    font-size: 0.8rem;
   }
 
   .hero-title {

@@ -89,22 +89,17 @@ export interface HomeCountdownMilestone {
   label: string;
   value: string;
   unit: string;
-  caption: string;
   targetDate: string;
 }
 
 const pretripMilestones = [
   {
     label: 'Brian OOO',
-    targetDate: '2026-06-11',
-    activeCaption: 'OOO starts today',
-    futureCaption: 'until OOO'
+    targetDate: '2026-06-11'
   },
   {
-    label: 'Wedding day',
-    targetDate: '2026-06-13',
-    activeCaption: 'today',
-    futureCaption: 'until vows'
+    label: 'our wedding',
+    targetDate: '2026-06-13'
   }
 ] as const;
 
@@ -115,7 +110,6 @@ function buildCountdownMilestone(date: Date, milestone: (typeof pretripMilestone
     label: milestone.label,
     value: String(days),
     unit: days === 1 ? 'day' : 'days',
-    caption: days === 0 ? milestone.activeCaption : milestone.futureCaption,
     targetDate: milestone.targetDate
   };
 }

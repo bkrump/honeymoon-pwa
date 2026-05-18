@@ -22,15 +22,15 @@ export function HomeScreen({ trip, referenceDate }: HomeScreenProps) {
               </div>
               <p className="hero-support">{display.secondary}</p>
               {display.milestones.length ? (
-                <div className="countdown-sidecars" aria-label="Additional countdowns">
+                <div className="countdown-milestones" aria-label="Additional countdowns">
                   {display.milestones.map((milestone) => (
-                    <div className="countdown-sidecar" key={milestone.targetDate}>
-                      <span>{milestone.label}</span>
+                    <p className="countdown-milestone" key={milestone.targetDate}>
                       <strong>{milestone.value}</strong>
-                      <p>
-                        {milestone.unit} {milestone.caption}
-                      </p>
-                    </div>
+                      {' '}
+                      <span>
+                        {milestone.unit} until {milestone.label}
+                      </span>
+                    </p>
                   ))}
                 </div>
               ) : null}
