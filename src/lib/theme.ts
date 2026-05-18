@@ -82,6 +82,42 @@ export interface HomeDisplay {
   primary: string;
   secondary: string;
   theme: ThemeId;
+  milestones: HomeCountdownMilestone[];
+}
+
+export interface HomeCountdownMilestone {
+  label: string;
+  value: string;
+  unit: string;
+  caption: string;
+  targetDate: string;
+}
+
+const pretripMilestones = [
+  {
+    label: 'Brian OOO',
+    targetDate: '2026-06-11',
+    activeCaption: 'OOO starts today',
+    futureCaption: 'until OOO'
+  },
+  {
+    label: 'Wedding day',
+    targetDate: '2026-06-13',
+    activeCaption: 'today',
+    futureCaption: 'until vows'
+  }
+] as const;
+
+function buildCountdownMilestone(date: Date, milestone: (typeof pretripMilestones)[number]): HomeCountdownMilestone {
+  const days = Math.max(0, differenceInDays(date, parseISODate(milestone.targetDate)));
+
+  return {
+    label: milestone.label,
+    value: String(days),
+    unit: days === 1 ? 'day' : 'days',
+    caption: days === 0 ? milestone.activeCaption : milestone.futureCaption,
+    targetDate: milestone.targetDate
+  };
 }
 
 export function buildHomeDisplay(trip: TripData, date: Date): HomeDisplay {
@@ -99,7 +135,8 @@ export function buildHomeDisplay(trip: TripData, date: Date): HomeDisplay {
       eyebrow: band.headline,
       primary: String(days),
       secondary: days === 1 ? 'day until wheels up' : 'days until wheels up',
-      theme: band.assetKey
+      theme: band.assetKey,
+      milestones: pretripMilestones.map((milestone) => buildCountdownMilestone(date, milestone))
     };
   }
 
@@ -108,6 +145,7 @@ export function buildHomeDisplay(trip: TripData, date: Date): HomeDisplay {
     eyebrow: band.accentLabel,
     primary: band.headline,
     secondary: trip.tripDateRange,
-    theme: band.assetKey
+    theme: band.assetKey,
+    milestones: []
   };
 }

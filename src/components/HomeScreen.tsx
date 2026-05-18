@@ -21,6 +21,19 @@ export function HomeScreen({ trip, referenceDate }: HomeScreenProps) {
                 <span className="countdown-unit">days</span>
               </div>
               <p className="hero-support">{display.secondary}</p>
+              {display.milestones.length ? (
+                <div className="countdown-sidecars" aria-label="Additional countdowns">
+                  {display.milestones.map((milestone) => (
+                    <div className="countdown-sidecar" key={milestone.targetDate}>
+                      <span>{milestone.label}</span>
+                      <strong>{milestone.value}</strong>
+                      <p>
+                        {milestone.unit} {milestone.caption}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
             </>
           ) : (
             <>
