@@ -94,12 +94,12 @@ export interface HomeCountdownMilestone {
 
 const pretripMilestones = [
   {
-    label: 'Brian OOO',
-    targetDate: '2026-06-11'
-  },
-  {
     label: 'our wedding',
     targetDate: '2026-06-13'
+  },
+  {
+    label: 'Brian OOO',
+    targetDate: '2026-06-11'
   }
 ] as const;
 

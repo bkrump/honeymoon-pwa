@@ -12,16 +12,16 @@ describe('buildHomeDisplay', () => {
     expect(display.primary).toBe('4');
     expect(display.milestones).toEqual([
       {
-        label: 'Brian OOO',
-        value: '1',
-        unit: 'day',
-        targetDate: '2026-06-11'
-      },
-      {
         label: 'our wedding',
         value: '3',
         unit: 'days',
         targetDate: '2026-06-13'
+      },
+      {
+        label: 'Brian OOO',
+        value: '1',
+        unit: 'day',
+        targetDate: '2026-06-11'
       }
     ]);
   });
